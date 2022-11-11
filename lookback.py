@@ -1,36 +1,23 @@
 #############################################################
-# Module: lookback.py										#
-#															#
-# Contains functions to find descendants, the time elapsed  #
-# between galaxy merger and binary merger and the redshift  #
-# at binary merger											#
-#															#
-#	--> lookback_function(z)								#
-#	--> time_between_mergers(z1,z2)							#
-#	--> find_descendant(k, tree_index)						#
-#	--> find_redshift(z1,time_to_merge)						#
-# 															#
-# !Further information is provided below each function      #
+# Module: lookback.py										
+#															
+# Contains functions to find descendants, the time elapsed  
+# between galaxy merger and binary merger and the redshift  
+# at binary merger											
+#															
+#	--> lookback_function(z)								
+#	--> time_between_mergers(z1,z2)							
+#	--> find_descendant(k, tree_index)						
+#	--> find_redshift(z1,time_to_merge)						
+# 															
+# !Further information is provided below each function      
 #############################################################
 
+import time
 import math
 import numpy as np
-
-import pandas as pd
-
-catalogue = 'guo2013'
-
-# Open data file with panda
-data = pd.read_csv('Data/InputData/sel_starting_ordered_%s.csv' %catalogue)
-
-# Store relevant data in individual arrays
-galaxyId = data.iloc[:,0].values
-DlastProgenitor = data.iloc[:,1].values
-snapnum = data.iloc[:,2].values
-Ddescendant = data.iloc[:,3].values
-P1_galaxyId = data.iloc[:,4].values
-P2_galaxyId = data.iloc[:,5].values
-redshift = data.iloc[:,6].values
+import scipy
+from scipy.integrate import quad
 
 #############################################################
 def lookback_function(z,omega_matter,omega_lambda):
@@ -65,24 +52,12 @@ def time_between_mergers(z1,z2,omega_matter,omega_lambda):
 		two subsequent galaxy mergers, in Gyr
 	"""
 
-	# Retrieve useful constants
-	TH0 = 13.4 #(in Gyr)
+	integral, precision = quad(lookback_function, z1, z2, args=(omega_matter,omega_lambda))
 
-	# Establish number of points to integrate and create
-	# a uniformly spaced vector of z values
-	N = 100
-	dz_vector = np.linspace(z1,z2,num=N)
-	sum = 0
-	# Numerically integrate the lookback integral
-	for i in range(len(dz_vector)):
-		sum = sum + lookback_function(dz_vector[i],omega_matter,omega_lambda)
-	sum = (z2-z1)*sum/N
-	value = TH0*(sum)
-
-	return value
+	return integral
 
 #############################################################
-def find_descendant(k,tree_index):
+def find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,redshift):
 
 	"""
 	find_descendant searches in the same catalogue of data
@@ -128,9 +103,9 @@ def find_descendant(k,tree_index):
 				break
 	if (descendant_index==-1):
 		z = 0
-	output = np.array([descendant_index,P1,P2,z])
+	#output = np.array([descendant_index,P1,P2,z])
 	
-	return output
+	return int(descendant_index), int(P1), int(P2), z
 
 #############################################################
 def find_redshift(z,time_to_merge,omega_matter,omega_lambda):
@@ -178,12 +153,7 @@ def integrate_rate(z,omega_matter,omega_lambda):
 		the value (float) of the integral
 	"""
 
-	N = 100
-	dz_vector = np.linspace(0,z,num=N)
-	sum = 0
-	for i in range(len(dz_vector)):
-		sum = sum+lookback_function(dz_vector[i],omega_matter,omega_lambda)
-	sum = z*sum/N
+	integral, precision = quad(lookback_function, 0., z, args=(omega_matter,omega_lambda))
 
-	return sum
+	return integral
 
