@@ -1,16 +1,16 @@
 #############################################################
-# Module: triplets.py                                       #
-#                                                           #
-# Contains a single function that analyzes the output of    #
-# the triple interaction, as from the bonetti's module      #
-#                                                           #
-#   --> output_analyzer(triplet_output,k,tree_index,		#
-#						redshift,mass_int,mass_b1,mass_b2,	#
-#						time_to_sink,sigma_inf,rho_inf,		#
-#						r_inf,m_dot,previous_redshift,		#
-#						previous_merger_diff,hardening_type)#
-#                                                           #
-# !Further information is provided below the function       #
+# Module: triplets.py                                       
+#                                                           
+# Contains a single function that analyzes the output of    
+# the triple interaction, as from the bonetti's module      
+#                                                           
+#   --> output_analyzer(triplet_output,k,tree_index,	
+#						redshift,mass_int,mass_b1,mass_b2,	
+#						time_to_sink,sigma_inf,rho_inf,		
+#						r_inf,m_dot,previous_redshift,		
+#						previous_merger_diff,hardening_type)
+#                                                           
+# !Further information is provided below the function       
 #############################################################
 
 import math
@@ -25,7 +25,7 @@ import lookback
 
 def output_analyzer(triplet_output,k,tree_index,redshift,mass_int,mass_b1,mass_b2,\
 time_to_sink,sigma_inf,rho_inf,r_inf,m_dot,previous_redshift,previous_merger_diff,\
-hardening_type,omega_matter,omega_lambda):
+hardening_type,omega_matter,omega_lambda,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree):
 	"""
 	Function to analyze the output (integer between 1 and 7) of triple interaction:
 		j==1: prompt merger between m_1 and m_2
@@ -140,7 +140,7 @@ rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
 
 		time_to_merge = time_to_sink + time_no_df
 
-		info_descendant = lookback.find_descendant(k,tree_index)
+		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
 		info_new = [int(element) for element in info_descendant[:3]]
 		info_new.append(info_descendant[3])
 		info_descendant = info_new
@@ -192,7 +192,7 @@ omega_matter,omega_lambda)
 		else:
 			q_bin = mass1/mass2
 
-		info_descendant = lookback.find_descendant(k,tree_index)
+		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
 		info_new = [int(element) for element in info_descendant[:3]]
 		info_new.append(info_descendant[3])
 		info_descendant = info_new
@@ -263,7 +263,7 @@ rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
 
 		time_to_merge = time_to_sink + time_no_df
 
-		info_descendant = lookback.find_descendant(k,tree_index)
+		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
 		info_new = [int(element) for element in info_descendant[:3]]
 		info_new.append(info_descendant[3])
 		info_descendant = info_new
@@ -315,7 +315,7 @@ omega_matter,omega_lambda)
 		else:
 			q_bin = mass1/mass2
 
-		info_descendant = lookback.find_descendant(k,tree_index)
+		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
 		info_new = [int(element) for element in info_descendant[:3]]
 		info_new.append(info_descendant[3])
 		info_descendant = info_new
@@ -388,7 +388,7 @@ rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
 
 		time_to_merge = time_to_sink + time_no_df
 
-		info_descendant = lookback.find_descendant(k,tree_index)
+		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
 		info_new = [int(element) for element in info_descendant[:3]]
 		info_new.append(info_descendant[3])
 		info_descendant = info_new
@@ -440,7 +440,7 @@ omega_matter,omega_lambda)
 		else:
 			q_bin = mass1/mass2
 
-		info_descendant = lookback.find_descendant(k,tree_index)
+		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
 		info_new = [int(element) for element in info_descendant[:3]]
 		info_new.append(info_descendant[3])
 		info_descendant = info_new
@@ -505,7 +505,7 @@ omega_matter,omega_lambda)
 		else:
 			q_bin = mass1/mass2
 		
-		info_descendant = lookback.find_descendant(k,tree_index)
+		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
 		info_new = [int(element) for element in info_descendant[:3]]
 		info_new.append(info_descendant[3])
 		info_descendant = info_new
