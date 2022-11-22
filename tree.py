@@ -28,17 +28,18 @@ import bonetti
 import delay_time
 import lookback
 import triplets
-import bh_mass
+import bh_mass_model
 import constants as cst
 
 
 #################################################################
 
-def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
+def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, tree_start, tree_end):
 
 	e = cst.ecc #deafult eccentricity value
 
 	ns = len(data['galaxyId'])
+
 
 	galaxyId = data['galaxyId'].copy()
 	lastProgenitorId = data['lastProgenitorId'].copy()
@@ -138,11 +139,11 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 	###########################################################################################
 	# in case the either one of the progenitors is a binary
 	# if progenitor 1 is a binary
-	mass1_1 = np.zeros(ns, dtype=int)
-	mass2_1 = np.zeros(ns, dtype=int)
+	mass1_1 = np.zeros(ns)
+	mass2_1 = np.zeros(ns)
 	# if progenitor 2 is a binary
-	mass1_2 = np.zeros(ns, dtype=int)
-	mass2_2 = np.zeros(ns, dtype=int)
+	mass1_2 = np.zeros(ns)
+	mass2_2 = np.zeros(ns)
 
 	
 	###########################################################################################
@@ -186,40 +187,34 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 	#		-> descendant index
 	###########################################################################################
 	
-	time_to_merge = np.zeros(ns, dtype=int)
-	time_df_ph1 = np.zeros(ns, dtype=int)
-	time_df_ph2 = np.zeros(ns, dtype=int)
-	time_star = np.zeros(ns, dtype=int)
-	time_gas = np.zeros(ns, dtype=int)
-	time_gw = np.zeros(ns, dtype=int)
-	time_df = np.zeros(ns, dtype=int)
+	time_to_merge = np.zeros(ns)
+	time_df_ph1 = np.zeros(ns)
+	time_df_ph2 = np.zeros(ns)
+	time_star = np.zeros(ns)
+	time_gas = np.zeros(ns)
+	time_gw = np.zeros(ns)
+	time_df = np.zeros(ns)
 
-	merger_time_diff = np.zeros(ns, dtype=int)
-	merger_redshift_vector = np.zeros(ns, dtype=int)
-	time_to_next_merger = np.zeros(ns, dtype=int)
-	long_df_time = np.zeros(ns, dtype=int)
+	merger_time_diff = np.zeros(ns)
+	merger_redshift_vector = np.zeros(ns)
+	time_to_next_merger = np.zeros(ns)
+	long_df_time = np.zeros(ns)
 
 	descendant_index = np.zeros(ns, dtype=int)
 
 	# In case at least one of the progenitors is a binary, store information about the inner
 	# and the outer mass ratios
-	q_in = np.zeros(ns, dtype=int)
-	q_out = np.zeros(ns, dtype=int)
+	q_in = np.zeros(ns)
+	q_out = np.zeros(ns)
 
 
-	i = 0
-	while i < len(galaxyId):
-		j = i 
-		while (galaxyId[j] != -1): # still the same tree
-			j = j + 1
-			if (j >= (len(galaxyId))): # in case the data set has ended
-				break
-
-		tree_index = j
-		tree_length = tree_index - i
+	n_trees = len(tree_start)
+	for i in tqdm(np.arange(n_trees)):
+		start = tree_start[i]
+		tree_index = tree_end[i]
 
 		# Analyze individual trees
-		for k in range(i, tree_index):
+		for k in range(start, tree_index):
 
 			# Combination (1)
 			if (type_P1[k] == 0 and type_P2[k] == 0):
@@ -237,8 +232,7 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 			
 				
 				# Calculate the binary merger time
-				time_to_merge[k], time_df_ph1[k], time_df_ph2[k], 
-				time_star[k], time_gas[k], time_gw[k] = delay_time.tot_delay_function(host_r_eff[k],host_sigma[k],
+				time_to_merge[k], time_df_ph1[k], time_df_ph2[k], time_star[k], time_gas[k], time_gw[k] = delay_time.tot_delay_function(host_r_eff[k],host_sigma[k],
 														satellite_sigma[k],satellite_BH[k],sigma_inf[k],rho_inf[k],
 														r_inf[k],mass1[k],mass2[k],e,m_dot[k],D_mass[k],r_eff[k],
 														hardening_type[k])
@@ -250,16 +244,15 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 					q_bin = min(mass1[k],mass2[k])/max(mass1[k],mass2[k])
 					
 					if (time_to_merge[k] > time_to_next_merger[k]):
-						if(time_df_tot < time_to_next_merger[k] or (time_df_tot >= 
-	time_to_next_merger[k] and q_bin > 0.03)):
+						if(time_df[k] < time_to_next_merger[k] or (time_df[k] >= 
+						   time_to_next_merger[k] and q_bin > 0.03)):
 
 							# Update information of descendant by recording that either
 							# one of the progenitors will be a binary
 							
 							if (info_descendant[1] == 1 and info_descendant[2] == 0):
 								# P1 of descendant is a binary!
-								merger_time_diff[info_descendant[0]] = time_to_merge[k] - 
-																	   time_to_next_merger[k]
+								merger_time_diff[info_descendant[0]] = time_to_merge[k] - time_to_next_merger[k]
 								type_P1[info_descendant[0]] = 2
 								P1_marker[info_descendant[0]] = k
 								mass1_1[info_descendant[0]] = q_bin/(1+q_bin)*mass1[info_descendant[0]]				
@@ -268,8 +261,7 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 
 							if (info_descendant[1] == 0 and info_descendant[2] == 1):
 								# P2 of descendant is a binary
-								merger_time_diff[info_descendant[0]] = time_to_merge[k] - 
-																	   time_to_next_merger[k]
+								merger_time_diff[info_descendant[0]] = time_to_merge[k] - time_to_next_merger[k]
 								type_P2[info_descendant[0]] = 2
 								P2_marker[info_descendant[0]] = k
 								mass2_1[info_descendant[0]] = q_bin/(1+q_bin)*mass2[info_descendant[0]]
@@ -311,9 +303,9 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 					# Find m_1, q_in and q_out to pass to triplet_function
 					m_1 = max(mass1_1[k], mass1_2[k])
 					m_2 = min(mass1_1[k], mass1_2[k])
-					m_3 = mass1[k]
+					m_intr = mass2[k]
 					q_in[k] = m_2/m_1
-					q_out[k] = m_3/(m_1 + m_2)
+					q_out[k] = m_intr/(m_1 + m_2)
 
 
 				# Combination (4)
@@ -330,9 +322,9 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 						# Find m_1, q_in, q_out
 						m_1 = max(mass2_1[k], mass2_2[k])
 						m_2 = min(mass2_1[k], mass2_2[k])
-						m_3 = mass1_2[k]
+						m_intr = mass1_2[k]
 						q_in[k] = m_2/m_1
-						q_out[k] = m_3/(m_1 + m_2)
+						q_out[k] = m_intr/(m_1 + m_2)
 
 
 					if (mass1_2[k] <= mass1_1[k] and mass1_2[k] <= mass2_1[k] and\
@@ -342,9 +334,9 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 						# Find m_1, q_in, q_out
 						m_1 = max(mass2_1[k], mass2_2[k])
 						m_2 = min(mass2_1[k], mass2_2[k])
-						m_3 = mass1_1[k]
+						m_intr = mass1_1[k]
 						q_in[k] = m_2/m_1
-						q_out[k] = m_3/(m_1 + m_2)
+						q_out[k] = m_intr/(m_1 + m_2)
 
 
 					if (mass2_1[k] <= mass1_1[k] and mass2_1[k] <= mass1_2[k] and\
@@ -353,9 +345,9 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 						# P1 is a binary and P2 is the intruder
 						m_1 = max(mass1_1[k], mass1_2[k])
 						m_2 = min(mass1_1[k], mass1_2[k])
-						m_3 = mass2_2[k]
+						m_intr = mass2_2[k]
 						q_in[k] = m_2/m_1
-						q_out[k] = m_3/(m_1 + m_2)
+						q_out[k] = m_intr/(m_1 + m_2)
 
 
 					if (mass2_2[k] <= mass1_1[k] and mass2_2[k] <= mass1_2[k] and\
@@ -364,9 +356,9 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 						# P1 is a binary, P2 is the intruder
 						m_1 = max(mass1_1[k], mass1_2[k])
 						m_2 = min(mass1_1[k], mass1_2[k])
-						m_3 = mass2_1[k]
+						m_intr = mass2_1[k]
 						q_in[k] = m_2/m_1
-						q_out[k] = m_3/(m_1 + m_2)
+						q_out[k] = m_intr/(m_1 + m_2)
 
 
 					
@@ -382,23 +374,23 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 
 					# Launch triplet interaction
 					# Check whether q_out is bigger than 1!
-					if (q_out < 1):
-						triplet_output = bonetti.triplet_function(m_1,q_in,q_out)
+					if (q_out[k] < 1):
+						triplet_output = bonetti.triplet_function(m_1,q_in[k],q_out[k])
 					else:
-						triplet_output = bonetti.big_triplet_function(q_out,q_in)
+						triplet_output = bonetti.big_triplet_function(q_out[k],q_in[k])
 
 
 								
 
 					# Analyze triplet output
 					output = triplets.output_analyzer(triplet_output,k,tree_index,D_z[k],
-							 m_intr,m_1,m_2[k],time_to_sink,sigma_inf[k],rho_inf[k],
-							 r_inf[k],m_dot[k],D_z[P2_marker[k]],merger_time_diff_P2[k],hardening_type[k],
+							 m_intr,m_1,m_2,time_to_sink,sigma_inf[k],rho_inf[k],
+							 r_inf[k],m_dot[k],D_z[P2_marker[k]],merger_time_diff[k],hardening_type[k],
 							 omega_matter,omega_lambda,snapnum[i : tree_index], galaxyId[i : tree_index],
 							 P1_Id[i : tree_index], P2_Id[i : tree_index], D_z[i : tree_index])
 
 
-					time_to_merge[k], time_star[k], time_gas[k], time_gw[k], time_to_next_merger[k] = output[12 : 18]
+					time_to_merge[k], time_star[k], time_gas[k], time_gw[k], time_to_next_merger[k] = output[12 : 17]
 					descendant_index[k] = output[0]
 
 					if(output[0] != -1):
@@ -454,12 +446,6 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 
 
 
-		i = i + tree_length + 1
-
-		if (i >= len(galaxyId)):
-			break
-
-
 	data['type_P1'] = type_P1
 	data['type_P2'] = type_P2
 	data['P1_marker'] = P1_marker
@@ -492,6 +478,9 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data):
 	data['q_out'] = q_out
 
 
-	data.to_csv('OutputData/output_%s_%s_%s.csv' %(str(catalog), str(mass_model), str(density_model)), index=False) 
+
+	data.to_csv('Data/OutputData/output_%s_%s_%s.csv' %(str(catalog), str(mass_model), str(density_model)), index=False) 
+
+
 
 
