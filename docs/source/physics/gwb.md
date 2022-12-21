@@ -1,2 +1,0 @@
-# GWB computation
-

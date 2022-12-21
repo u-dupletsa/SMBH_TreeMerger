@@ -1,4 +1,7 @@
-# SMBH Time Delays
+.. _physics:
+
+SMBH Time Delays
+================
 
 ## Dynamical Friction
 

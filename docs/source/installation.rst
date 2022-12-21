@@ -1,4 +1,5 @@
-# Installing SMBH-TreeMerger
+Installing SMBH-TreeMerger
+==========================
 
 Clone the repo:
 
