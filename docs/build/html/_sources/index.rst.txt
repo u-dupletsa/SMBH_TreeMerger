@@ -1,13 +1,18 @@
 Welcome to SMBH-TreeMerger's documentation!
-==============================================
+-------------------------------------------
 
 .. toctree::
-	Code Installation <installation.rst>
+	Installation <installation.rst>
 
+Physics
+=======
 .. toctree::
-	Physics <physics/*>
+	Physics <physics/index>	
 
+Tutorials
+=========
 .. toctree::
-	Tutorial <tutorials/*>
+	Tutorials <tutorials/index>
+
 
 

@@ -1,12 +1,14 @@
-.. _physics:
-
 SMBH Time Delays
 ================
 
-## Dynamical Friction
+Dynamical Friction
+~~~~~~~~~~~~~~~~~~
 
-## Stellar Hardening
+Stellar Hardening
+~~~~~~~~~~~~~~~~~
 
-## Gaseous Hardening
+Gaseous Hardening
+~~~~~~~~~~~~~~~~~
 
-## Gravitational Wave Emission
+Gravitational Wave Emission
+~~~~~~~~~~~~~~~~~~~~~~~~~~~

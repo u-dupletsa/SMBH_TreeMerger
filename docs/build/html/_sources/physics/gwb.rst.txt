@@ -1,5 +1,3 @@
-.. _physics:
-
 GWB computation
 ===============
 
