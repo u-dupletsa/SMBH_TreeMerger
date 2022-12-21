@@ -5,10 +5,11 @@
 # between galaxy merger and binary merger and the redshift  
 # at binary merger											
 #															
-#	--> lookback_function(z)								
-#	--> time_between_mergers(z1,z2)							
-#	--> find_descendant(k, tree_index)						
-#	--> find_redshift(z1,time_to_merge)						
+#	--> lookback_function(z,omega_matter,omega_lambda)								
+#	--> time_between_mergers(z1,z2,omega_matter,omega_lambda)							
+#	--> find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,redshift)						
+#	--> find_redshift(z,time_to_merge,omega_matter,omega_lambda)
+#	--> integrate_rate(z,omega_matter,omega_lambda)						
 # 															
 # !Further information is provided below each function      
 #############################################################
@@ -46,6 +47,8 @@ def time_between_mergers(z1,z2,omega_matter,omega_lambda):
 	input parameters:
 		z1 -> redshift of the subsequent galaxy merger
 		z2 -> redshift of the previous galaxy merger
+		omega_matter -> matter energy density
+		omega_lambda -> dark energy density
 		
 	return:
 		value (float) of the time elapsed between 
@@ -69,6 +72,7 @@ def find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,redshi
 			occurs
 		tree_index -> index at which the corresponding tree
 					 ends
+		snapnum -> 
 
 	return:
 		vector containing, respectively, the index (int)
@@ -80,10 +84,6 @@ def find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,redshi
 
 		--> [descendant_index, P1, P2, z]
 	"""
-
-
-	# Use the same set of data analyzed in the main program, 
-	# tree.py, to find descendants
 
 	# Set to zero the descendant type (progenitor 1 or 2)
 	P1 = 0
@@ -103,7 +103,6 @@ def find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,redshi
 				break
 	if (descendant_index==-1):
 		z = 0
-	#output = np.array([descendant_index,P1,P2,z])
 	
 	return int(descendant_index), int(P1), int(P2), z
 
@@ -118,6 +117,8 @@ def find_redshift(z,time_to_merge,omega_matter,omega_lambda):
 		z -> redshift of the galaxy merger
 		time_to_merge -> time delay between galaxy and binary
 						 merger
+		omega_matter -> matter energy density
+		omega_lambda -> dark energy density
 
 	return:
 		the value (float) of the redshift, z, at which the 
@@ -125,13 +126,13 @@ def find_redshift(z,time_to_merge,omega_matter,omega_lambda):
 	"""
 
 	# Select number of points to integrate
-	N = 100
-	dz = np.linspace(z,0.0,num=N)
+	N = 10000
+	dz = np.linspace(z,0.,num=N)
 	i = 1
 	time = time_between_mergers(dz[i],z,omega_matter,omega_lambda)
 	# Search for the nearest redshift that gives the elapsed
 	# time
-	while (time<time_to_merge and i<(N-1)):
+	while ((time - time_to_merge)/time_to_merge < 0.01 and i<(N-1)):
 		i = i+1
 		time = time_between_mergers(dz[i],z,omega_matter,omega_lambda)
 
@@ -147,7 +148,8 @@ def integrate_rate(z,omega_matter,omega_lambda):
 
 	input parameters:
 		z -> redshift until to integrate
-		omega_matter,omega_lambda -> cosmological parameters
+		omega_matter -> matter energy density
+		omega_lambda -> dark energy density
 
 	return:
 		the value (float) of the integral
