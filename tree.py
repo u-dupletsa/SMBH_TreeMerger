@@ -232,10 +232,11 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 			
 				
 				# Calculate the binary merger time
-				time_to_merge[k], time_df_ph1[k], time_df_ph2[k], time_star[k], time_gas[k], time_gw[k] = delay_time.tot_delay_function(host_r_eff[k],host_sigma[k],
-														satellite_sigma[k],satellite_BH[k],sigma_inf[k],rho_inf[k],
-														r_inf[k],mass1[k],mass2[k],e,m_dot[k],D_mass[k],r_eff[k],
-														hardening_type[k])
+				time_to_merge[k], time_df_ph1[k], time_df_ph2[k], time_star[k], time_gas[k], time_gw[k] = 
+												delay_time.tot_delay_function(host_r_eff[k],host_sigma[k],
+												satellite_sigma[k],satellite_BH[k],sigma_inf[k],rho_inf[k],
+												r_inf[k],mass1[k],mass2[k],e,m_dot[k],D_mass[k],r_eff[k],
+												hardening_type[k])
 				time_df[k] = time_df_ph1[k] + time_df_ph2[k]
 		
 				
