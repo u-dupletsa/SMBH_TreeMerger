@@ -8,7 +8,10 @@
 #						redshift,mass_int,mass_b1,mass_b2,	
 #						time_to_sink,sigma_inf,rho_inf,		
 #						r_inf,m_dot,previous_redshift,		
-#						previous_merger_diff,hardening_type)
+#						previous_merger_diff,hardening_type,
+#						omega_matter,omega_lambda,snapnum,
+#						galaxyId,P1_galaxyId,P2_galaxyId,
+#						z_tree)
 #                                                           
 # !Further information is provided below the function       
 #############################################################
@@ -19,7 +22,7 @@ import random
 
 import delay_time
 import lookback
-
+import constants as cst
 
 
 
@@ -29,10 +32,10 @@ hardening_type,omega_matter,omega_lambda,snapnum,galaxyId,P1_galaxyId,P2_galaxyI
 	"""
 	Function to analyze the output (integer between 1 and 7) of triple interaction:
 		j==1: prompt merger between m_1 and m_2
-		j==2: prompt merger between m_1 and m_3
-		j==3: prompt merger between m_2 and m_3
-		j==4: ejection of m_3
-		j==5: ejection of m_2
+		j==2: ejection of m_3
+		j==3: prompt merger between m_1 and m_3
+		j==4: ejection of m_2
+		j==5: prompt merger between m_2 and m_3
 		j==6: ejection of m_1
 		j==7: unresolved triplet
 
@@ -63,6 +66,12 @@ hardening_type,omega_matter,omega_lambda,snapnum,galaxyId,P1_galaxyId,P2_galaxyI
 						  gaseous (hardening_type == 0), or stellar
 						  only in case sfr=0 (hardening_type == 1)
 		omega_matter,omega_lambda -> values of cosmological parameters
+		snapnum -> snapnum of the merger
+		galaxyId ->
+		P1_galaxyId ->
+		P2_galaxyId ->
+		z_tree -> 
+
 
 	return:
 		vector containing information on the outcome and on the descendant
@@ -94,19 +103,20 @@ hardening_type,omega_matter,omega_lambda,snapnum,galaxyId,P1_galaxyId,P2_galaxyI
 
 	Gyr = 3.15*10**16
 	start_time = 3*10**8/Gyr
-	e = 0
+	e = cst.ecc
 
 	merger_diff = 0
 	
 	type_P1 = -1
 	type_P2 = -1
 
-	T = 0 # successful prompt merger
-	E = 0 # ejection + successful delayed merger
-	F = 0 # unresolved triplet -> forced binary!
-	TF = 0 #failed prompt
-	EF = 0 #failed ejection
-	FF = 0 #failed failed triplet
+	prompt_plus_delayed = 0 # successful prompt merger
+	ejection_plus_delayed = 0 # ejection + successful delayed merger
+	forced_binary = 0 # unresolved triplet -> forced binary!
+	prompt_plus_failed_delayed = 0 #failed prompt
+	ejection_plus_failed_delayed = 0 #failed ejection
+	failde_forced_binary = 0 #failed failed triplet
+	still_merging = 0
 
 	merger_redshift = 0
 	
@@ -119,354 +129,127 @@ hardening_type,omega_matter,omega_lambda,snapnum,galaxyId,P1_galaxyId,P2_galaxyI
 	m_3 = mass_int
 
 
-	if (triplet_output == 1):
-		# prompt merger m_1+m_2
-		# forms binary m_12+m_3
+	if (triplet_output == 1 or triplet_output == 3 or triplet_output == 5): # Prompt merger!
+		if (triplet_output == 1):
+			# prompt merger m_1+m_2
+			# forms binary m_12+m_3
+			mass1 = m_1 + m_2
+			mass2 = m_3
+			if(mass1 > mass2):
+				q_bin = mass2/mass1
+			else:
+				q_bin = mass1/mass2
+		if (triplet_output == 3):
+			# prompt merger m_1+m_3
+			# froms binary m_13+m_2
+			mass1 = m_1 + m_3
+			mass2 = m_2
+			if(mass1 > mass2):
+				q_bin = mass2/mass1
+			else:
+				q_bin = mass1/mass2
+		if (triplet_output == 5):
+			# prompt merger between m_2+m_3
+			# forms binary m_23+m_1
+			mass1 = m_2 + m_3
+			mass2 = m_1
+			if(mass1 > mass2):
+				q_bin = mass2/mass1
+			else:
+				q_bin = mass1/mass2
 
-		mass1 = m_1 + m_2
-		mass2 = m_3
-		if(mass1 > mass2):
-			q_bin = mass2/mass1
-		else:
-			q_bin = mass1/mass2
-
-		delay_output = delay_time.tot_delay_no_df(sigma_inf,\
-rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
-		time_no_df = delay_output[0]
-		time_star = delay_output[1]
-		time_gas = delay_output[2]
-		time_gw = delay_output[3]
-
-
+		time_no_df, time_star, time_gas, time_gw = delay_time.tot_delay_no_df(sigma_inf,rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
 		time_to_merge = time_to_sink + time_no_df
 
 		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
-		info_new = [int(element) for element in info_descendant[:3]]
-		info_new.append(info_descendant[3])
-		info_descendant = info_new
-
 
 		next_redshift = info_descendant[3]
-		time_between_mergers = lookback.time_between_mergers(next_redshift,redshift,\
-omega_matter,omega_lambda)
+		time_between_mergers = lookback.time_between_mergers(next_redshift,redshift,omega_matter,omega_lambda)
 
 		if(info_descendant[0] != -1):
 
 			if (time_to_merge > time_between_mergers):
-				if(time_to_sink < time_between_mergers or (time_to_sink >= \
-time_between_mergers and q_bin > 0.03)):
 
-					TF = 1
+				#if(time_to_sink < time_between_mergers or (time_to_sink >= time_between_mergers and q_bin > 0.03)):
 
-					merger_diff = time_to_merge - time_between_mergers
+				prompt_plus_failed_delayed = 1
 
-					if (info_descendant[1] == 1 and info_descendant[2] == 0):
-						# P1 of descendant is a binary!
-						type_P1 = 2
-						type_P2 = 0
+				merger_diff = time_to_merge - time_between_mergers
 
-					if (info_descendant[1] == 0 and info_descendant[2] == 1):
-						# P2 of descendant is a binary
-						type_P1 = 0
-						type_P2 = 2
+				if (info_descendant[1] == 1 and info_descendant[2] == 0):
+					# P1 of descendant is a binary!
+					type_P1 = 2
+					type_P2 = 0
+
+				if (info_descendant[1] == 0 and info_descendant[2] == 1):
+					# P2 of descendant is a binary
+					type_P1 = 0
+					type_P2 = 2
 			else:
 				type_P1 = 0
 				type_P2 = 0
-				T = 1
-				merger_redshift = lookback.find_redshift(redshift,time_to_merge,\
-omega_matter,omega_lambda)
+				prompt_plus_delayed = 1
+				merger_redshift = lookback.find_redshift(redshift,time_to_merge,omega_matter,omega_lambda)
+
 		if(info_descendant[0] == -1 and time_to_merge < time_between_mergers):
 			type_P1 = 0
 			type_P2 = 0
-			T = 1
+			prompt_plus_delayed = 1
 			merger_redshift = -1
-
-
-	if (triplet_output == 2):
-		# ejection of the intruder
-		# delayed merger between m_1+m_2
-		mass1 = m_1
-		mass2 = m_2
-		if(mass1 > mass2):
-			q_bin = mass2/mass1
-		else:
-			q_bin = mass1/mass2
-
-		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
-		info_new = [int(element) for element in info_descendant[:3]]
-		info_new.append(info_descendant[3])
-		info_descendant = info_new
-
-		next_redshift = info_descendant[3]
-		time_between_mergers = lookback.time_between_mergers(next_redshift,redshift,\
-omega_matter,omega_lambda)
-		time_to_merge = time_to_sink + random.uniform(start_time,time_between_mergers)
-
-		delay_output = delay_time.tot_delay_no_df(sigma_inf,\
-rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
-		time_no_df = delay_output[0]
-		time_star = delay_output[1]
-		time_gas = delay_output[2]
-		time_gw = delay_output[3]
-
-
-		if(info_descendant[0] != -1):
-
-			if (time_to_merge > time_between_mergers):
-				if(time_to_sink < time_between_mergers or (time_to_sink >= \
-time_between_mergers and q_bin > 0.03)):
-
-					EF = 1
-
-					merger_diff = time_to_merge - time_between_mergers
-
-					if (info_descendant[1] == 1 and info_descendant[2] == 0):
-						# P1 of descendant is a binary!
-						type_P1 = 2
-						type_P2 = 0
-
-					if (info_descendant[1] == 0 and info_descendant[2] == 1):
-						# P2 of descendant is a binary
-						type_P1 = 0
-						type_P2 = 2
-			else:
-				type_P1 = 0
-				type_P2 = 0
-				E = 1
-				merger_redshift = lookback.find_redshift(redshift,time_to_merge,\
-omega_matter,omega_lambda)
-		if(info_descendant[0] == -1 and time_to_merge < time_between_mergers):
+		if(info_descendant[0] == -1 and time_to_merge > time_between_mergers):
 			type_P1 = 0
 			type_P2 = 0
-			E = 1
+			still_merging = 1
 			merger_redshift = -1
 
-
-
-	if (triplet_output == 3):
-		# prompt merger m_1+m_3
-		# froms binary m_13+m_2
-		
-		mass1 = m_1 + m_3
-		mass2 = m_2
-		if(mass1 > mass2):
-			q_bin = mass2/mass1
-		else:
-			q_bin = mass1/mass2
-
-		delay_output = delay_time.tot_delay_no_df(sigma_inf,\
-rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
-		time_no_df = delay_output[0]
-		time_star = delay_output[1]
-		time_gas = delay_output[2]
-		time_gw = delay_output[3]
-
-		time_to_merge = time_to_sink + time_no_df
-
-		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
-		info_new = [int(element) for element in info_descendant[:3]]
-		info_new.append(info_descendant[3])
-		info_descendant = info_new
-
-		next_redshift = info_descendant[3]
-		time_between_mergers = lookback.time_between_mergers(next_redshift,redshift,\
-omega_matter,omega_lambda)
-
-
-		if(info_descendant[0] != -1):
-
-			if (time_to_merge > time_between_mergers):
-				if(time_to_sink < time_between_mergers or (time_to_sink >= \
-time_between_mergers and q_bin > 0.03)):
-
-					TF = 1
-
-					merger_diff = time_to_merge - time_between_mergers
-
-					if (info_descendant[1] == 1 and info_descendant[2] == 0):
-						# P1 of descendant is a binary!
-						type_P1 = 2
-						type_P2 = 0
-
-					if (info_descendant[1] == 0 and info_descendant[2] == 1):
-						# P2 of descendant is a binary
-						type_P1 = 0
-						type_P2 = 2
-			else:
-				type_P1 = 0
-				type_P2 = 0
-				T = 1
-				merger_redshift = lookback.find_redshift(redshift,time_to_merge,\
-omega_matter,omega_lambda)
-		if(info_descendant[0] == -1 and time_to_merge < time_between_mergers):
-			type_P1 = 0
-			type_P2 = 0
-			T = 1
-			merger_redshift = -1
-
-
-	if (triplet_output == 4):
-		# ejection of m_2
-		# delayed merger between m_1+m_3
-		mass1 = m_1
-		mass2 = m_3
-		if(mass1 > mass2):
-			q_bin = mass2/mass1
-		else:
-			q_bin = mass1/mass2
-
-		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
-		info_new = [int(element) for element in info_descendant[:3]]
-		info_new.append(info_descendant[3])
-		info_descendant = info_new
-
-
-		next_redshift = info_descendant[3]
-		time_between_mergers = lookback.time_between_mergers(next_redshift,redshift,\
-omega_matter,omega_lambda)
-
-		time_to_merge = time_to_sink + random.uniform(start_time,time_between_mergers)
-
-		delay_output = delay_time.tot_delay_no_df(sigma_inf,\
-rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
-		time_no_df = delay_output[0]
-		time_star = delay_output[1]
-		time_gas = delay_output[2]
-		time_gw = delay_output[3]
 
 	
 
-		if(info_descendant[0] != -1):
-
-			if (time_to_merge > time_between_mergers):
-				if(time_to_sink < time_between_mergers or (time_to_sink >= \
-time_between_mergers and q_bin > 0.03)):
-
-					EF = 1
-
-					merger_diff = time_to_merge - time_between_mergers
-
-					if (info_descendant[1] == 1 and info_descendant[2] == 0):
-						# P1 of descendant is a binary!
-						type_P1 = 2
-						type_P2 = 0
-
-					if (info_descendant[1] == 0 and info_descendant[2] == 1):
-						# P2 of descendant is a binary
-						type_P1 = 0
-						type_P2 = 2
+	if (triplet_output == 2 or triplet_output == 4 or triplet_output == 6): # Ejection plus delayed merger!
+		if (triplet_output == 2):
+			# ejection of m_3
+			# delayed merger between m_1+m_2
+			mass1 = m_1
+			mass2 = m_2
+			if(mass1 > mass2):
+				q_bin = mass2/mass1
 			else:
-				type_P1 = 0
-				type_P2 = 0
-				E = 1
-				merger_redshift = lookback.find_redshift(redshift,time_to_merge,\
-omega_matter,omega_lambda)
+				q_bin = mass1/mass2
+		if (triplet_output == 4):
+			# ejection of m_2
+			# delayed merger between m_1+m_3
+			mass1 = m_1
+			mass2 = m_3
+			if(mass1 > mass2):
+				q_bin = mass2/mass1
+			else:
+				q_bin = mass1/mass2
+		if (triplet_output == 6):
+			# ejection of m_1
+			# delayed merger m_2+m_3
+			mass1 = m_2
+			mass2 = m_3
+			if(mass1 > mass2):
+				q_bin = mass2/mass1
+			else:
+				q_bin = mass1/mass2
 
-		if(info_descendant[0] == -1 and time_to_merge < time_between_mergers):
-			type_P1 = 0
-			type_P2 = 0
-			E = 1
-			merger_redshift = -1
-
-	if (triplet_output == 5):
-		# prompt merger between m_2+m_3
-		# forms binary m_23+m_1
-		
-		mass1 = m_2 + m_3
-		mass2 = m_1
-		if(mass1 > mass2):
-			q_bin = mass2/mass1
-		else:
-			q_bin = mass1/mass2
-
-		delay_output = delay_time.tot_delay_no_df(sigma_inf,\
-rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
-		time_no_df = delay_output[0]
-		time_star = delay_output[1]
-		time_gas = delay_output[2]
-		time_gw = delay_output[3]
-
-		time_to_merge = time_to_sink + time_no_df
 
 		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
-		info_new = [int(element) for element in info_descendant[:3]]
-		info_new.append(info_descendant[3])
-		info_descendant = info_new
-
 		next_redshift = info_descendant[3]
-		time_between_mergers = lookback.time_between_mergers(next_redshift,redshift,\
-omega_matter,omega_lambda)
 		
-
-		if(info_descendant[0] != -1):
-
-			if (time_to_merge > time_between_mergers):
-				if(time_to_sink < time_between_mergers or (time_to_sink >= \
-time_between_mergers and q_bin > 0.03)):
-
-					TF = 1
-
-					merger_diff = time_to_merge - time_between_mergers
-
-					if (info_descendant[1] == 1 and info_descendant[2] == 0):
-						# P1 of descendant is a binary!
-						type_P1 = 2
-						type_P2 = 0
-
-					if (info_descendant[1] == 0 and info_descendant[2] == 1):
-						# P2 of descendant is a binary
-						type_P1 = 0
-						type_P2 = 2
-			else:
-				type_P1 = 0
-				type_P2 = 0
-				T = 1
-				merger_redshift = lookback.find_redshift(redshift,time_to_merge,\
-omega_matter,omega_lambda)
-		if(info_descendant[0] == -1 and time_to_merge < time_between_mergers):
-			type_P1 = 0
-			type_P2 = 0
-			T = 1
-			merger_redshift = -1
-
-
-	if (triplet_output == 6):
-		# ejection of m_1
-		# delayed merger m_2+m_3
-		mass1 = m_2
-		mass2 = m_3
-		if(mass1 > mass2):
-			q_bin = mass2/mass1
-		else:
-			q_bin = mass1/mass2
-
-		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
-		info_new = [int(element) for element in info_descendant[:3]]
-		info_new.append(info_descendant[3])
-		info_descendant = info_new
-
-		next_redshift = info_descendant[3]
-		time_between_mergers = lookback.time_between_mergers(next_redshift,redshift,\
-omega_matter,omega_lambda)
-
+		time_between_mergers = lookback.time_between_mergers(next_redshift,redshift,omega_matter,omega_lambda)
 		time_to_merge = time_to_sink + random.uniform(start_time,time_between_mergers)
 
-		delay_output = delay_time.tot_delay_no_df(sigma_inf,\
-rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
-		time_no_df = delay_output[0]
-		time_star = delay_output[1]
-		time_gas = delay_output[2]
-		time_gw = delay_output[3]
-
-	
+		time_no_df, time_star, time_gas, time_gw = delay_time.tot_delay_no_df(sigma_inf,rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
+		
 
 		if(info_descendant[0] != -1):
 
 			if (time_to_merge > time_between_mergers):
-				if(time_to_sink < time_between_mergers or (time_to_sink >= \
-time_between_mergers and q_bin > 0.03)):
+				#if(time_to_sink < time_between_mergers or (time_to_sink >= time_between_mergers and q_bin > 0.03)):
 
-					EF = 1
+					ejection_plus_failed_delayed = 1
 
 					merger_diff = time_to_merge - time_between_mergers
 
@@ -482,15 +265,20 @@ time_between_mergers and q_bin > 0.03)):
 			else:
 				type_P1 = 0
 				type_P2 = 0
-				E = 1
-				merger_redshift = lookback.find_redshift(redshift,time_to_merge,\
-omega_matter,omega_lambda)
-
+				ejection_plus_delayed = 1
+				merger_redshift = lookback.find_redshift(redshift,time_to_merge,omega_matter,omega_lambda)
+		
 		if(info_descendant[0] == -1 and time_to_merge < time_between_mergers):
 			type_P1 = 0
 			type_P2 = 0
-			E = 1
+			ejection_plus_delayed = 1
 			merger_redshift = -1
+		if(info_descendant[0] == -1 and time_to_merge > time_between_mergers):
+			type_P1 = 0
+			type_P2 = 0
+			still_merging = 1
+			merger_redshift = -1
+
 
 	if (triplet_output == 7):
 		# no interaction has happened
@@ -506,20 +294,11 @@ omega_matter,omega_lambda)
 			q_bin = mass1/mass2
 		
 		info_descendant = lookback.find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,z_tree)
-		info_new = [int(element) for element in info_descendant[:3]]
-		info_new.append(info_descendant[3])
-		info_descendant = info_new
-
 		next_redshift = info_descendant[3]
-		time_between_mergers = lookback.time_between_mergers(next_redshift,redshift,\
-omega_matter,omega_lambda)
 		
-		delay_output = delay_time.tot_delay_no_df(sigma_inf,\
-rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
-		time_no_df = delay_output[0]
-		time_star = delay_output[1]
-		time_gas = delay_output[2]
-		time_gw = delay_output[3]
+		time_between_mergers = lookback.time_between_mergers(next_redshift,redshift,omega_matter,omega_lambda)
+		
+		time_no_df, time_star, time_gas, time_gw = delay_time.tot_delay_no_df(sigma_inf,rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
 
 
 		time_to_merge = previous_merger_diff
@@ -527,10 +306,9 @@ rho_inf,r_inf,mass1,mass2,e,m_dot,hardening_type)
 		if(info_descendant[0] != -1):
 
 			if (time_to_merge > time_between_mergers):
-				if(time_to_sink < time_between_mergers or (time_to_sink >= \
-time_between_mergers and q_bin > 0.03)):
+				#if(time_to_sink < time_between_mergers or (time_to_sink >= time_between_mergers and q_bin > 0.03)):
 
-					FF = 1
+					failde_forced_binary = 1
 
 					merger_diff = time_to_merge - time_between_mergers
 
@@ -546,22 +324,28 @@ time_between_mergers and q_bin > 0.03)):
 			else:
 				type_P1 = 0
 				type_P2 = 0
-				F = 1
-				merger_redshift = lookback.find_redshift(redshift,time_to_merge,\
-omega_matter,omega_lambda)
+				forced_binary = 1
+				merger_redshift = lookback.find_redshift(redshift,time_to_merge,omega_matter,omega_lambda)
 
 		if(info_descendant[0] == -1 and time_to_merge < time_between_mergers):
 			type_P1 = 0
 			type_P2 = 0
-			F = 1
+			forced_binary = 1
+			merger_redshift = -1
+		if(info_descendant[0] == -1 and time_to_merge > time_between_mergers):
+			type_P1 = 0
+			type_P2 = 0
+			still_merging = 1
 			merger_redshift = -1
 
 	if(time_to_merge < 0):
 		print('whily???')
 
 	
-	return np.array([info_descendant[0],type_P1,type_P2,T,E,F,TF,EF,FF,merger_redshift,\
-mass1,mass2,time_to_merge,time_star,time_gas,time_gw,merger_diff,time_between_mergers,q_bin])
+	return int(info_descendant[0]), int(type_P1), int(type_P2), int(prompt_plus_delayed), int(ejection_plus_delayed),\
+		   int(forced_binary), int(prompt_plus_failed_delayed), int(ejection_plus_failed_delayed), int(failde_forced_binary),\
+		   int(still_merging), merger_redshift, mass1, mass2, time_to_merge, time_star, time_gas,\
+		   time_gw, merger_diff, time_between_mergers, q_bin
 
 
 
