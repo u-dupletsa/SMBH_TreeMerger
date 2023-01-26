@@ -1,16 +1,19 @@
 #############################################################
-# Module: bonetti.py                                        #
-#                                                           #
-# Contains functions to compute the triple interaction      #
-# outcome                                                   #
-#                                                           #
-#   --> bilinear_interp(val_to_int, X_val, Y_val, values)   #
-#   --> trilinear_interp(val_to_int, X_val, Y_val, Z_val,   #
-#                      values)                              #
-#   --> triplet_function(m_1,q_in,q_out)                    #
-#   --> big_triplet_function(q_out_big,q_in)                #
-#                                                           #
-# !Further information is provided below each function      #
+# All credits to Matteo Bonetti
+#############################################################
+#
+# Module: bonetti.py
+#
+# Contains functions to compute the triple interaction      
+# outcome
+#
+#   --> bilinear_interp(val_to_int, X_val, Y_val, values)
+#   --> trilinear_interp(val_to_int, X_val, Y_val, Z_val,
+#                      values)
+#   --> triplet_function(m_1,q_in,q_out)
+#   --> big_triplet_function(q_out_big,q_in)
+#
+# !Further information is provided below each function      
 #############################################################
 
 import math
@@ -274,10 +277,10 @@ def triplet_function(m_1,q_in,q_out):
     the value (int), j, of the outcome of the triple
     interaction
       j==1: prompt merger between m_1 and m_2
-      j==2: prompt merger between m_1 and m_3
-      j==3: prompt merger between m_2 and m_3
-      j==4: ejection of m_3
-      j==5: ejection of m_2
+      j==2: ejection of m_3
+      j==3: prompt merger between m_1 and m_3
+      j==4: ejection of m_2
+      j==5: prompt merger between m_2 and m_3
       j==6: ejection of m_1
       j==7: unresolved triplet
   """
@@ -300,6 +303,8 @@ def triplet_function(m_1,q_in,q_out):
   random_num = np.random.random(1)
 
   probability_vector = np.array([P12,D12,P13,D13,P23,D23,M0])
+  #print('probability_vector', probability_vector)
+
 
   if (random_num[0] <= probability_vector[0]):
     j = 1
@@ -335,10 +340,10 @@ def big_triplet_function(q_out_big,q_in):
     the value (int), j, of the outcome of the triple
     interaction
       j==1: prompt merger between m_1 and m_2
-      j==2: prompt merger between m_1 and m_3
-      j==3: prompt merger between m_2 and m_3
-      j==4: ejection of m_3
-      j==5: ejection of m_2
+      j==2: ejection of m_3
+      j==3: prompt merger between m_1 and m_3
+      j==4: ejection of m_2
+      j==5: prompt merger between m_2 and m_3
       j==6: ejection of m_1
       j==7: unresolved triplet
   """
@@ -361,6 +366,7 @@ def big_triplet_function(q_out_big,q_in):
   random_num = np.random.random(1)
 
   probability_vector = np.array([P12,D12,P13,D13,P23,D23,M0])
+  #print('probability_vector', probability_vector)
 
   if (random_num[0] <= probability_vector[0]):
     j = 1

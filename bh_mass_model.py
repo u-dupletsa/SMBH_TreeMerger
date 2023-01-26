@@ -1,27 +1,19 @@
 #############################################################
-# Module: bh_mass.py										
-#															
-# Contains functions to find the black hole mass and 		
-# the accreted masses										
-#															
-#	--> bh_mass_function(bulge_mass) 			
-#	--> radio(time,hot_mass,vvir,bh_mass,stellar_mass)		
-#	--> quasar(stellar_mass_P1,stellar_mass_P2,cold_mass,   
-#			   vvir)										
-# 															
-# !Further information is provided below each function      
+# Module: bh_mass.py
+#
+# Contains functions to find the black hole mass and
+# the accreted masses
+#
+#    --> bh_mass_function(bulge_mass)
+#    --> radio(time,hot_mass,vvir,bh_mass,stellar_mass)
+#    --> quasar(stellar_mass_P1,stellar_mass_P2,cold_mass,
+#				vvir)
+#
+# !Further information is provided below each function
 #############################################################
 
-import argparse
 import numpy as np 
-import math
-import pandas as pd
-
-# constants
-kappa = 1.5*10**(-5)
-f = 0.03
-t_1yr = 3.15*10**7
-Gyr = 3.15*10**16
+import constants as cst
 
 #############################################################
 
@@ -42,16 +34,16 @@ def bh_mass_function(model, bulge_mass):
 		masses
 	"""
 	if (model == 'KH'):
-		mean = 8.69+1.17*math.log10(bulge_mass/10**(11))
+		mean = 8.69 + 1.17 * math.log10(bulge_mass / 10**(11))
 		sigma = 0.28
-		bh_mass = np.random.normal(mean,sigma)
+		bh_mass = np.random.normal(mean, sigma)
 		bh_mass = 10**(bh_mass)
 
 	return bh_mass
 
 #############################################################
 
-def radio(time,hot_mass,vvir,bh_mass,stellar_mass):
+def radio(time, hot_mass, vvir, bh_mass, stellar_mass):
 	"""
 	Function that computes the mass accreted in between 
 	two subsequent galaxy mergers (accretion during
@@ -72,16 +64,16 @@ def radio(time,hot_mass,vvir,bh_mass,stellar_mass):
 		masses
 	"""
 
-	time = time*Gyr/t_1yr
-	dark_mass = 0.5*10**2*stellar_mass
-	delta_mass_radio = kappa*(hot_mass/dark_mass/0.1)*(vvir/200)**3*\
-					   (bh_mass*h/10**8)*(time)
+	time = time * cst.Gyr / cst.t_1yr
+	dark_mass = 0.5 * 10**2 * stellar_mass
+	delta_mass_radio = cst.kappa * (hot_mass / dark_mass / 0.1) * (vvir / 200)**3*\
+					   (bh_mass * h/10**8)*(time)
 
 	return delta_mass_radio # it's in solar masses
 
 #############################################################
 
-def quasar(stellar_mass_P1,stellar_mass_P2,cold_mass,vvir):
+def quasar(stellar_mass_P1, stellar_mass_P2, cold_mass, vvir):
 	"""
 	Function to compute the cold gas accreted during the 
 	merger
@@ -108,8 +100,8 @@ def quasar(stellar_mass_P1,stellar_mass_P2,cold_mass,vvir):
 		stellar_mass_host = stellar_mass_P2
 		stellar_mass_satellite = stellar_mass_P1
 		
-	delta_mass_quasar = f*(stellar_mass_satellite/stellar_mass_host)*\
-						(cold_mass/(1+280/vvir))
+	delta_mass_quasar = cst.f * (stellar_mass_satellite / stellar_mass_host) * \
+						(cold_mass / (1 + 280 / vvir))
 
 	return delta_mass_quasar
 

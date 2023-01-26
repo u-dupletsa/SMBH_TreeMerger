@@ -1,19 +1,19 @@
 #############################################################
-# Module: triplets.py                                       
-#                                                           
-# Contains a single function that analyzes the output of    
-# the triple interaction, as from the bonetti's module      
-#                                                           
-#   --> output_analyzer(triplet_output,k,tree_index,	
-#						redshift,mass_int,mass_b1,mass_b2,	
-#						time_to_sink,sigma_inf,rho_inf,		
-#						r_inf,m_dot,previous_redshift,		
-#						previous_merger_diff,hardening_type,
-#						omega_matter,omega_lambda,snapnum,
-#						galaxyId,P1_galaxyId,P2_galaxyId,
-#						z_tree)
-#                                                           
-# !Further information is provided below the function       
+# Module: triplets.py
+#
+# Contains a single function that analyzes the output of
+# the triple interaction, as from the bonetti's module
+#
+#    --> output_analyzer(triplet_output,k,tree_index,	
+#			redshift,mass_int,mass_b1,mass_b2,	
+#			time_to_sink,sigma_inf,rho_inf,		
+#			r_inf,m_dot,previous_redshift,		
+#			previous_merger_diff,hardening_type,
+#			omega_matter,omega_lambda,snapnum,
+#			galaxyId,P1_galaxyId,P2_galaxyId,
+#			z_tree)
+#
+# !Further information is provided below the function
 #############################################################
 
 import math

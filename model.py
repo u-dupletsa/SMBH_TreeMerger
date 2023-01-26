@@ -1,15 +1,14 @@
 #############################################################
-#	Module: model.py										
-#															
-#	Models masses of black holes and different types of radii
-#	for both the remnant and the progenitor galaxies. The new 
-#	columns are added to the injection data files.
+# Module: model.py
 #
+# Models masses of black holes and different types of radii
+# for both the remnant and the progenitor galaxies. The new 
+# columns are added to the injection data files.
 #
-#	Input file: --> sel_starting_ordered_<catalog>.hdf5 
-#	Output file:--> injection_<catalog>.hdf5  									
-# 															
-#	!Further information is provided below each function      
+#    Input file: --> sel_starting_ordered_<catalog>.hdf5 
+#    Output file:--> injection_<catalog>.hdf5
+#
+# !Further information is provided below each function
 #############################################################
 
 import numpy as np
@@ -19,24 +18,22 @@ import constants as cst
 import bh_mass_model
 import density_profile
 
+import lal
+
 from tqdm import tqdm
 
 
-catalogs = ['bertone', 'de_lucia', 'guo2010', 'guo2013']
-data_folder = 'Data/InputData'
-mass_model = 'KH'
-density_model = 'isothermal'
+
+def generate_input(catalog, mass_model, density_model, h):
 
 
+	lbs = ['galaxyId', 'lastProgenitorId', 'snapnum', 'descendantId', 'P1_Id', 'P2_Id', 'D_z',
+		   'D_mass', 'D_bulge', 'sfr', 'sfr_bulge', 'D_BH', 'P1_z', 'P2_z', 'M1', 'M2', 
+		   'P1_bulge', 'P2_bulge', 'P1_stars', 'P2_stars', 'M_cold', 'M_hot', 'V_vir', 
+		   'P1_M_cold', 'P1_M_hot', 'P1_V_vir', 'P2_M_cold', 'P2_M_hot', 'P2_V_vir']
 
-lbs = ['galaxyId', 'lastProgenitorId', 'snapnum', 'descendantId', 'P1_Id', 'P2_Id', 'D_z',
-	   'D_mass', 'D_bulge', 'sfr', 'sfr_bulge', 'D_BH', 'P1_z', 'P2_z', 'M1', 'M2', 
-	   'P1_bulge', 'P2_bulge', 'P1_stars', 'P2_stars', 'M_cold', 'M_hot', 'V_vir', 
-	   'P1_M_cold', 'P1_M_hot', 'P1_V_vir', 'P2_M_cold', 'P2_M_hot', 'P2_V_vir']
-
-for i in tqdm(range(len(catalogs))):
-
-	data = pd.read_csv('%s/sel_starting_ordered_%s.csv' %(str(data_folder), str(catalogs[i])),
+	# Open raw data file
+	data = pd.read_csv('Data/InputData/sel_starting_ordered_%s.csv' %str(catalog),
 					    names = lbs, skiprows = 1, delimiter = ',')
 
 	ns = len(data['galaxyId'])
@@ -139,21 +136,21 @@ for i in tqdm(range(len(catalogs))):
 		if(galaxyId[k] != -1):
 
 			# convert all mass variables in solar masses
-			D_mass[k] = D_mass[k] * cst.mass_conv
-			D_bulge[k] = D_bulge[k] * cst.mass_conv
-			D_BH[k] = D_BH[k] * cst.mass_conv 
-			M1[k] = M1[k] * cst.mass_conv 
-			M2[k] = M2[k] * cst.mass_conv
-			P1_bulge[k] = P1_bulge[k] * cst.mass_conv
-			P2_bulge[k] = P2_bulge[k] * cst.mass_conv
-			P1_stars[k] = P1_stars[k] * cst.mass_conv
-			P2_stars[k] = P2_stars[k] * cst.mass_conv
-			M_cold[k] = M_cold[k] * cst.mass_conv
-			M_hot[k] = M_hot[k] * cst.mass_conv
-			P1_M_cold[k] = P1_M_cold[k] * cst.mass_conv
-			P2_M_cold[k] = P2_M_cold[k] * cst.mass_conv
-			P1_M_hot[k] = P1_M_hot[k] * cst.mass_conv
-			P2_M_hot[k] = P2_M_hot[k] * cst.mass_conv
+			D_mass[k] = D_mass[k] * cst.mass_conv / h
+			D_bulge[k] = D_bulge[k] * cst.mass_conv / h
+			D_BH[k] = D_BH[k] * cst.mass_conv / h 
+			M1[k] = M1[k] * cst.mass_conv / h 
+			M2[k] = M2[k] * cst.mass_conv / h
+			P1_bulge[k] = P1_bulge[k] * cst.mass_conv / h
+			P2_bulge[k] = P2_bulge[k] * cst.mass_conv / h
+			P1_stars[k] = P1_stars[k] * cst.mass_conv / h
+			P2_stars[k] = P2_stars[k] * cst.mass_conv / h
+			M_cold[k] = M_cold[k] * cst.mass_conv / h
+			M_hot[k] = M_hot[k] * cst.mass_conv / h
+			P1_M_cold[k] = P1_M_cold[k] * cst.mass_conv / h
+			P2_M_cold[k] = P2_M_cold[k] * cst.mass_conv / h
+			P1_M_hot[k] = P1_M_hot[k] * cst.mass_conv / h
+			P2_M_hot[k] = P2_M_hot[k] * cst.mass_conv / h
 			# convert sfr variables in Msol per year
 			sfr[k] = sfr[k] / cst.t_1yr 
 			sfr_bulge[k] = sfr_bulge[k] / cst.t_1yr
@@ -183,25 +180,25 @@ for i in tqdm(range(len(catalogs))):
 
 
 			# Split the remnant black hole mass in the binary component masses
-					# in mass proportional way to the progenitor masses
+			# in mass proportional way to the progenitor masses
 			q[k] = P1_BH_mass[k]/P2_BH_mass[k]
 			mass1[k] = q[k]/(1. + q[k]) * bh_mass[k]
 			mass2[k] = 1./(1. + q[k]) * bh_mass[k]
 			
-			''' NOT SURE IF THIS IS IMPORTANT 
+			
 			# Rearrange the masses so that mass1>mass2
 			if (mass1[k] < mass2[k]):
 				m_aux = mass2[k]
 				mass2[k] = mass1[k]
 				mass1[k] = m_aux
-			'''
+			
 
 			
 
 			r_eff_P1[k] = density_profile.effective_radius(P1_bulge[k], P1_stars[k], P1_z[k])
 			r_eff_P2[k] = density_profile.effective_radius(P2_bulge[k], P2_stars[k], P2_z[k])
 			r_inf_P1[k] = density_profile.influence_radius(density_model, r_eff_P1[k], P1_stars[k], P1_BH_mass[k])
-			r_inf_P2[k] = density_profile.influence_radius(density_model, r_eff_P2[k], P1_stars[k], P2_BH_mass[k])
+			r_inf_P2[k] = density_profile.influence_radius(density_model, r_eff_P2[k], P2_stars[k], P2_BH_mass[k])
 
 			sigma_P1[k] = density_profile.sigma(density_model, P1_stars[k], r_eff_P1[k], r_inf_P1[k])
 			sigma_P2[k] = density_profile.sigma(density_model, P2_stars[k], r_eff_P2[k], r_inf_P2[k])
@@ -227,8 +224,8 @@ for i in tqdm(range(len(catalogs))):
 			# necessary for the hardening timescales
 			r_eff[k] = density_profile.effective_radius(D_bulge[k], D_mass[k], D_z[k])
 			r_inf[k] = density_profile.influence_radius(density_model, r_eff[k], D_mass[k], bh_mass[k])
-			sigma_inf[k] = density_profile.sigma_inf(density_model, bh_mass[k], D_mass[k], r_inf[k])
-			rho_inf[k] = density_profile.rho_inf(density_model, D_mass[k], r_inf[k], r_eff[k])
+			sigma_inf[k] = density_profile.sigma_inf(density_model, bh_mass[k], D_mass[k], r_eff[k], r_inf[k])
+			rho_inf[k] = density_profile.rho_inf(density_model, D_mass[k], r_eff[k], r_inf[k])
 
 
 
@@ -296,11 +293,8 @@ for i in tqdm(range(len(catalogs))):
 	data['m_dot'] = m_dot
 	data['hardening_type'] = hardening_type
 
-	data.to_csv('%s/injection_%s_%s_%s.csv' %(str(data_folder), str(catalogs[i]), str(mass_model), str(density_model)), index=False)  
-	#delim = ','
-	#header = delim.join(data.keys())
-	#np.savetxt('%s/injection_%s.csv' %(str(data_folder), str(catalogs[i])), data, fmt = ','.join(['%i'] * 6 + ['%1.4f'] * 45 + ['%i']), 
-	#			header=header)
+	data.to_csv('Data/InputData/injection_%s_%s_%s.csv' %(str(catalog), str(mass_model), str(density_model)), 
+				index=False)  
 
 
 	

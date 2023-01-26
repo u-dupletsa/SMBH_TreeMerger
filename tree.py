@@ -1,18 +1,18 @@
 #################################################################
-# Module: tree.py										    
-#################################################################															    
+# Module: tree.py
+#################################################################
 # A catalog (name and data) and cosmology are passed to the main
 # function:
 #
-# def tree(catalog, density_model, mass_model, omega_matter, 
-#		   omega_lambda, data)		
-#															   
+#    --> def tree(catalog, density_model, mass_model, omega_matter, 
+#		   omega_lambda, data)
+#
 # The program returns an output file containing all the information
 # of the injection file as well as the results binary/triplet/
 # quadruplet interactions and all the phase of dynamical evolution:
-# 						
-#		--> output_<catalog>_<mass_model>_<density_model>.csv														    
-#					 	
+#
+#    --> output_<catalog>_<mass_model>_<density_model>.csv
+#
 #################################################################
 
 import math
@@ -96,7 +96,7 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 
 
 	###########################################################################################
-	# type_P1 and type_P2 are vectors that store information on the 
+	# type_P1 and type_P2 are vectors that store information on the
 	# two progenitors, P1 and P2:
 	# 
 	#	-> if the value is 0 then the progenitor is a single BH
@@ -156,22 +156,29 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 	#						+ delayed merger (otherwise 0)
 	# 	-> forced_binary_vector: if 1 the merger is a triplet, that remains unresolved: it is
 	#							 made though of a binary that successfully merges (otherwise 0)
-	#	-> quadruplet_vector: if 1 the merger contains 4 black holes, which are reduced to a 
-	#						  triplet (so maximum one of the vectors above has to be 1), 
+	#	-> quadruplet_vector: if 1 the merger contains 4 black holes, which are reduced to a
+	#						  triplet (so maximum one of the vectors above has to be 1),
 	#						  otherwise it is zero
 	#	-> failed_prompt_vector: if 1 it is a triplet that failed prompt merger
-	#	-> failed_ejection_vector: if 1 it is a triplet that failed ejectio + delayed merger
+	#	-> failed_ejection_vector: if 1 it is a triplet that failed ejection + delayed merger
 	#	-> failed_failed_vector: if 1 it is an unresolved triplet, and after it is made a
 	#							binary it fails to merge in time
 	###########################################################################################
+	form_binary_vector = np.zeros(ns, dtype=int)
+	form_triplet_vector = np.zeros(ns, dtype=int)
+	form_quadruplet_vector = np.zeros(ns, dtype=int)
+
 	binary_vector = np.zeros(ns, dtype=int)
-	triplet_vector = np.zeros(ns, dtype=int)
+	prompt_vector = np.zeros(ns, dtype=int)
 	ejection_vector = np.zeros(ns, dtype=int)
 	forced_binary_vector = np.zeros(ns, dtype=int)
-	quadruplet_vector = np.zeros(ns, dtype=int)
+	
+	failed_binary_vector = np.zeros(ns, dtype=int)
 	failed_prompt_vector = np.zeros(ns, dtype=int)
 	failed_ejection_vector = np.zeros(ns, dtype=int)
-	failed_failed_vector = np.zeros(ns, dtype=int)
+	failed_forced_vector = np.zeros(ns, dtype=int)
+
+	still_merging_vector = np.zeros(ns, dtype=int)
 
 	###########################################################################################
 	# Vectors to record the delay times:
@@ -198,7 +205,6 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 	merger_time_diff = np.zeros(ns)
 	merger_redshift_vector = np.zeros(ns)
 	time_to_next_merger = np.zeros(ns)
-	long_df_time = np.zeros(ns)
 
 	descendant_index = np.zeros(ns, dtype=int)
 
@@ -219,18 +225,18 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 			# Combination (1)
 			if (type_P1[k] == 0 and type_P2[k] == 0):
 				# BINARY!
+				form_binary_vector[k] = 1
 
 				# Find descendant of this merger
 				info_descendant = lookback.find_descendant(k, tree_index, snapnum[i : tree_index], galaxyId[i : tree_index],
 														   P1_Id[i : tree_index], P2_Id[i : tree_index], D_z[i : tree_index])
-
 				descendant_index[k] = info_descendant[0]
+
 				# Calculate time elapsed between two subsequent galaxy mergers
 				time_to_next_merger[k] = lookback.time_between_mergers(info_descendant[-1],\
 										 D_z[k],omega_matter,omega_lambda)
 
-			
-				
+							
 				# Calculate the binary merger time
 				time_to_merge[k], time_df_ph1[k], time_df_ph2[k], time_star[k],\
 				time_gas[k], time_gw[k] = delay_time.tot_delay_function(host_r_eff[k],host_sigma[k],
@@ -238,37 +244,36 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 										r_inf[k],mass1[k],mass2[k],e,m_dot[k],D_mass[k],r_eff[k],
 										hardening_type[k])
 				time_df[k] = time_df_ph1[k] + time_df_ph2[k]
-		
 				
 				if(info_descendant[0] != -1):
 
 					q_bin = min(mass1[k],mass2[k])/max(mass1[k],mass2[k])
 					
 					if (time_to_merge[k] > time_to_next_merger[k]):
-						if(time_df[k] < time_to_next_merger[k] or (time_df[k] >= 
-						   time_to_next_merger[k] and q_bin > 0.03)):
+						failed_binary_vector[k] = 1
+						# if(time_df[k] < time_to_next_merger[k] or (time_df[k] >= 
+						# time_to_next_merger[k] and q_bin > 0.03)):
 
-							# Update information of descendant by recording that either
-							# one of the progenitors will be a binary
-							
-							if (info_descendant[1] == 1 and info_descendant[2] == 0):
-								# P1 of descendant is a binary!
-								merger_time_diff[info_descendant[0]] = time_to_merge[k] - time_to_next_merger[k]
-								type_P1[info_descendant[0]] = 2
-								P1_marker[info_descendant[0]] = k
-								mass1_1[info_descendant[0]] = q_bin/(1+q_bin)*mass1[info_descendant[0]]				
-								mass1_2[info_descendant[0]] = 1/(1+q_bin)*mass1[info_descendant[0]]
+						# Update information of descendant by recording that either
+						# one of the progenitors will be a binary
+						
+						if (info_descendant[1] == 1 and info_descendant[2] == 0):
+							# P1 of descendant is a binary!
+							merger_time_diff[info_descendant[0]] = time_to_merge[k] - time_to_next_merger[k]
+							type_P1[info_descendant[0]] = 2
+							P1_marker[info_descendant[0]] = k
+							mass1_1[info_descendant[0]] = q_bin/(1+q_bin)*mass1[info_descendant[0]]				
+							mass1_2[info_descendant[0]] = 1/(1+q_bin)*mass1[info_descendant[0]]
 
 
-							if (info_descendant[1] == 0 and info_descendant[2] == 1):
-								# P2 of descendant is a binary
-								merger_time_diff[info_descendant[0]] = time_to_merge[k] - time_to_next_merger[k]
-								type_P2[info_descendant[0]] = 2
-								P2_marker[info_descendant[0]] = k
-								mass2_1[info_descendant[0]] = q_bin/(1+q_bin)*mass2[info_descendant[0]]
-								mass2_2[info_descendant[0]] = 1/(1+q_bin)*mass2[info_descendant[0]]
-						else:
-							long_df_time[k] = 1
+						if (info_descendant[1] == 0 and info_descendant[2] == 1):
+							# P2 of descendant is a binary
+							merger_time_diff[info_descendant[0]] = time_to_merge[k] - time_to_next_merger[k]
+							type_P2[info_descendant[0]] = 2
+							P2_marker[info_descendant[0]] = k
+							mass2_1[info_descendant[0]] = q_bin/(1+q_bin)*mass2[info_descendant[0]]
+							mass2_2[info_descendant[0]] = 1/(1+q_bin)*mass2[info_descendant[0]]
+			
 
 					else:
 						binary_vector[k] = 1 # successful merger!
@@ -280,11 +285,18 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 					merger_redshift_vector[k] = lookback.find_redshift(D_z[k],
 												time_to_merge[k],omega_matter,omega_lambda)
 
+				if (info_descendant[0] == -1 and time_to_merge[k] > time_to_next_merger[k]):
+					still_merging_vector[k] = 1 
+					merger_redshift_vector[k] = -1
+
 
 
 			else:
 				# Combination (2)
 				if (type_P1[k] == 0 and type_P2[k] == 2): # P1 is the intruder, P2 is a binary
+					#print('triplet')
+					form_triplet_vector[k] = 1
+
 					# Triplet
 
 					# Binary from P1 and single BH (intruder) from P2
@@ -299,6 +311,8 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 				# Combination (3)
 				if (type_P1[k] == 2 and type_P2[k] == 0): # P1 is a binary, P2 is the intruder
 					# Triplet
+					#print('triplet')
+					form_triplet_vector[k] = 1
 					
 					# Binary from P1 and single BH (intruder) from P2
 					# Find m_1, q_in and q_out to pass to triplet_function
@@ -312,8 +326,9 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 				# Combination (4)
 				# Both P1 and P2 are binaries
 				if (type_P1[k] == 2 and type_P2[k] == 2):
+					#print('quadruplet')
 					
-					quadruplet_vector[k] = 1
+					form_quadruplet_vector[k] = 1
 
 					if (mass1_1[k] <= mass1_2[k] and mass1_1[k] <= mass2_1[k] and
 						mass1_1[k] <= mass2_2[k]):
@@ -362,88 +377,70 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 						q_out[k] = m_intr/(m_1 + m_2)
 
 
+				# Calculate time to sink due to dynamical friction	
+				time_df_ph1[k] = delay_time.time_df_phase1(r_eff[k],host_sigma[k],
+								 satellite_sigma[k],satellite_BH[k])
+				time_df_ph2[k] = delay_time.time_df_phase2(r_eff[k],r_inf[k],
+								 host_sigma[k],satellite_sigma[k],mass1[k],mass2[k])
+				time_df[k] = time_df_ph1[k] + time_df_ph2[k]
+
+
+				# Launch triplet interaction
+				# Check whether q_out is bigger than 1!
+				if (q_out[k] < 1):
+					triplet_output = bonetti.triplet_function(m_1,q_in[k],q_out[k])
+				else:
+					triplet_output = bonetti.big_triplet_function(q_out[k],q_in[k])
+
+
+				# Analyze triplet output
+				output = triplets.output_analyzer(triplet_output,k,tree_index,D_z[k],
+						 m_intr,m_1,m_2,time_df[k],sigma_inf[k],rho_inf[k],
+						 r_inf[k],m_dot[k],D_z[P2_marker[k]],merger_time_diff[k],hardening_type[k],
+						 omega_matter,omega_lambda,snapnum[i : tree_index], galaxyId[i : tree_index],
+						 P1_Id[i : tree_index], P2_Id[i : tree_index], D_z[i : tree_index])
+
+				#print('output = ', output[3:10])
+				time_to_merge[k], time_star[k], time_gas[k], time_gw[k], time_to_next_merger[k] = output[12 : 17]
+				descendant_index[k] = output[0]
+
+				prompt_vector[k], ejection_vector[k], forced_binary_vector[k], failed_prompt_vector[k],\
+				failed_ejection_vector[k], failed_forced_vector[k], still_merging_vector[k] = output[3:10]
+
+				if(output[0] != -1):
+
+					q_bin = output[18]
 					
-	
+					if (time_to_merge[k] > time_to_next_merger[k]):
+						#if(time_to_sink < time_to_next_merger[k] or (time_to_sink >= 
+						#   time_to_next_merger[k] and q_bin > 0.03)):
+							# Update information of descendant by recording that either
+							# one progenitor will be a binary
+							
+					
+						if (output[1] == 2 and output[2] == 0):
+							# P1 of descendant is a binary!
+							merger_time_diff[output[0]] = time_to_merge[k] - time_to_next_merger[k]
+							type_P1[output[0]] = 2
+							P1_marker[output[0]] = k
+							mass1_1[output[0]] = q_bin/(1+q_bin)*mass1[output[0]]				
+							mass1_2[output[0]] = 1/(1+q_bin)*mass1[output[0]]
+						
+						if (output[1] == 0 and output[2] == 2):
+							# P2 of descendant is a binary
+							merger_time_diff[output[0]] = time_to_merge[k] - time_to_next_merger[k]
+							type_P2[output[0]] = 2
+							P2_marker[output[0]] = k
+							mass2_1[output[0]] = q_bin/(1+q_bin)*mass2[output[0]]
+							mass2_2[output[0]] = 1/(1+q_bin)*mass2[output[0]]
 
-					# Calculate time to sink due to dynamical friction	
-					time_df_ph1[k] = delay_time.time_df_phase1(r_eff[k],host_sigma[k],
-									 satellite_sigma[k],satellite_BH[k])
-					time_df_ph2[k] = delay_time.time_df_phase2(r_eff[k],r_inf[k],
-									 host_sigma[k],satellite_sigma[k],mass1[k],mass2[k])
-					time_to_sink = time_df_ph1[k] + time_df_ph2[k]
-
-
-					# Launch triplet interaction
-					# Check whether q_out is bigger than 1!
-					if (q_out[k] < 1):
-						triplet_output = bonetti.triplet_function(m_1,q_in[k],q_out[k])
 					else:
-						triplet_output = bonetti.big_triplet_function(q_out[k],q_in[k])
-
-
-								
-
-					# Analyze triplet output
-					output = triplets.output_analyzer(triplet_output,k,tree_index,D_z[k],
-							 m_intr,m_1,m_2,time_to_sink,sigma_inf[k],rho_inf[k],
-							 r_inf[k],m_dot[k],D_z[P2_marker[k]],merger_time_diff[k],hardening_type[k],
-							 omega_matter,omega_lambda,snapnum[i : tree_index], galaxyId[i : tree_index],
-							 P1_Id[i : tree_index], P2_Id[i : tree_index], D_z[i : tree_index])
-
-
-					time_to_merge[k], time_star[k], time_gas[k], time_gw[k], time_to_next_merger[k] = output[12 : 17]
-					descendant_index[k] = output[0]
-
-					if(output[0] != -1):
-
-						q_bin = output[18]
-						
-						if (time_to_merge[k] > time_to_next_merger[k]):
-							if(time_to_sink < time_to_next_merger[k] or (time_to_sink >= 
-							   time_to_next_merger[k] and q_bin > 0.03)):
-								# Update information of descendant by recording that either
-								# one progenitor will be a binary
-								
-						
-								if (output[1] == 2 and output[2] == 0):
-									# P1 of descendant is a binary!
-									merger_time_diff[output[0]] = time_to_merge[k] - time_to_next_merger[k]
-									type_P1[output[0]] = 2
-									P1_marker[output[0]] = k
-									mass1_1[output[0]] = q_bin/(1+q_bin)*mass1[output[0]]				
-									mass1_2[output[0]] = 1/(1+q_bin)*mass1[output[0]]
-								
-								if (output[1] == 0 and output[2] == 2):
-									# P2 of descendant is a binary
-									merger_time_diff[output[0]] = time_to_merge[k] - time_to_next_merger[k]
-									type_P2[output[0]] = 2
-									P2_marker[output[0]] = k
-									mass2_1[output[0]] = q_bin/(1+q_bin)*mass2[output[0]]
-									mass2_2[output[0]] = 1/(1+q_bin)*mass2[output[0]]
-							else:
-								long_df_time[k] = 1
-
-						else:
-							triplet_vector[k] = triplet_vector[k] + output[3]
-							ejection_vector[k] = ejection_vector[k] + output[4]
-							forced_binary_vector[k] = binary_vector[k] + output[5]
-							failed_prompt_vector[k] = failed_prompt_vector[k] + output[6]
-							failed_ejection_vector[k] = failed_ejection_vector[k] + output[7]
-							failed_failed_vector[k] = failed_failed_vector[k] + output[8]
-
-							merger_redshift_vector[k] = lookback.find_redshift(D_z[k],
-														time_to_merge[k],omega_matter,omega_lambda)
-
-					if(output[0] == -1 and time_to_merge[k] < time_to_next_merger[k]):
-						triplet_vector[k] = triplet_vector[k] + output[3]
-						ejection_vector[k] = ejection_vector[k] + output[4]
-						forced_binary_vector[k] = binary_vector[k] + output[5]
-						failed_prompt_vector[k] = failed_prompt_vector[k] + output[6]
-						failed_ejection_vector[k] = failed_ejection_vector[k] + output[7]
-						failed_failed_vector[k] = failed_failed_vector[k] + output[8]
-
 						merger_redshift_vector[k] = lookback.find_redshift(D_z[k],
 													time_to_merge[k],omega_matter,omega_lambda)
+
+				if(output[0] == -1 and time_to_merge[k] < time_to_next_merger[k]):
+					merger_redshift_vector[k] = lookback.find_redshift(D_z[k],
+												time_to_merge[k],omega_matter,omega_lambda)
 
 
 
@@ -455,14 +452,18 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 	data['mass2_1'] = mass2_1
 	data['mass1_2'] = mass1_2
 	data['mass2_2'] = mass2_2
+	data['form_binary_vector'] = form_binary_vector
+	data['form_triplet_vector'] = form_triplet_vector
+	data['form_quadruplet_vector'] = form_quadruplet_vector
 	data['binary_vector'] = binary_vector
-	data['triplet_vector'] = triplet_vector
+	data['prompt_vector'] = prompt_vector
 	data['ejection_vector'] = ejection_vector
 	data['forced_binary_vector'] = forced_binary_vector
-	data['quadruplet_vector'] = quadruplet_vector
+	data['failed_binary_vector'] = failed_binary_vector
 	data['failed_prompt_vector'] = failed_prompt_vector
 	data['failed_ejection_vector'] = failed_ejection_vector
-	data['failed_failed_vector'] = failed_failed_vector
+	data['failed_forced_vector'] = failed_forced_vector
+	data['still_merging_vector'] = still_merging_vector
 	data['time_to_merge'] = time_to_merge
 	data['time_df_ph1'] = time_df_ph1
 	data['time_df_ph2'] = time_df_ph2
@@ -473,7 +474,6 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 	data['merger_time_diff'] = merger_time_diff
 	data['merger_redshift_vector'] = merger_redshift_vector
 	data['time_to_next_merger'] = time_to_next_merger
-	data['long_df_time'] = long_df_time
 	data['descendant_index'] = descendant_index
 	data['q_in'] = q_in
 	data['q_out'] = q_out

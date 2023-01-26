@@ -1,25 +1,41 @@
-import numpy as np
-import random
+#############################################################
+# MAIN prograM
+#
+# Launches the analisys of merger trees of a given catalog
+#
+#############################################################
 
+import numpy as np
 import pandas as pd
+
+import os
 
 import time
 from tqdm import tqdm
 
 import tree
+import model
+import find_tree_indexes
+
+import yaml
 
 #################################################################
 #################################################################
-# Select catalogs and cosmology
-#catalog = ['de_lucia', 'bertone', 'guo2010',' guo2013']
-catalog = 'bertone'
-mass_model = 'KH'
-density_model = 'isothermal'
-omega_matter = 0.272
-omega_lambda = 0.728
-h = 0.704
+# Select catalog and model
+#catalog = ['de_lucia', 'bertone', 'guo2010', 'guo2013', 'horizon']
+catalog = 'guo2010'
+mass_model = 'KH' # KH or millennium
+density_model = 'isothermal' # isothermal or dehnen
+print('Analysing %s catalog with masses modeled as %s and %s density profile' 
+		%(str(catalog),str(mass_model),str(density_model)))
 #################################################################
 #################################################################
+
+with open('settings.yaml') as f:
+    doc = yaml.load(f, Loader=yaml.FullLoader)
+
+
+
 
 data_folder = 'Data/InputData'
 
@@ -32,7 +48,40 @@ lbs = ['galaxyId', 'lastProgenitorId', 'snapnum', 'descendantId', 'P1_Id', 'P2_I
 	   'satellite_sigma', 'satellite_BH', 'host_BH', 'r_eff', 'r_inf', 'sigma_inf', 'rho_inf',
 	   'm_dot', 'hardening_type']
 
-data = pd.read_csv('%s/injection_%s_%s_%s.csv' %(str(data_folder), str(catalog), str(mass_model), str(density_model)),
-					    names = lbs, skiprows = 1, delimiter = ',')
 
-tree.tree(catalog, omega_matter, omega_lambda, data)
+catalog_properties = doc[catalog]
+h = eval(str(catalog_properties['h']))
+omega_matter = eval(str(catalog_properties['omega_matter']))
+omega_lambda = eval(str(catalog_properties['omega_lambda']))
+
+# Specify path
+path_data = '%s/injection_%s_%s_%s.csv' %(str(data_folder), str(catalog), str(mass_model), str(density_model))
+path_index = '%s/tree_indexes_%s.csv' %(str(data_folder), str(catalog))
+
+# Check whether the specified
+# path exists or not
+if os.path.exists(path_data):
+	data = pd.read_csv(path_data, names = lbs, skiprows = 1, delimiter = ',')
+	print('Opening data file')
+else:
+	print('Data file does not exist, generating file')
+	model.generate_input(catalog, mass_model, density_model, h)
+	data = pd.read_csv(path_data, names = lbs, skiprows = 1, delimiter = ',')
+	print('Opening data file')
+
+if os.path.exists(path_index):
+	index_data = pd.read_csv(path_index, names = ['start', 'end'], skiprows = 1, delimiter = ',')
+	print('Opening index file')
+else:
+	print('Index file does not exist, generating file')
+	find_tree_indexes.find_indexes(catalog, mass_model, density_model)
+	index_data = pd.read_csv(path_index, names = ['start', 'end'], skiprows = 1, delimiter = ',')
+	print('Opening index file')
+
+
+tree_start = index_data['start'].copy()
+tree_end = index_data['end'].copy()
+
+print('Launching tree analysis')
+tree.tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, tree_start, tree_end)
+
