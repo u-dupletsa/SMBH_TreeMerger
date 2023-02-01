@@ -5,7 +5,7 @@
 # the triple interaction, as from the bonetti's module
 #
 #    --> output_analyzer(triplet_output,k,tree_index,	
-#			redshift,mass_int,mass_b1,mass_b2,	
+#			redshift,mass_intr,mass_b1,mass_b2,	
 #			time_to_sink,sigma_inf,rho_inf,		
 #			r_inf,m_dot,previous_redshift,		
 #			previous_merger_diff,hardening_type,
@@ -28,7 +28,7 @@ import constants as cst
 
 def output_analyzer(triplet_output, k, tree_index, z_gal_merger, mass_intr, mass_b1, mass_b2,\
 time_to_sink, sigma_inf, rho_inf, r_inf, m_dot, previous_merger_diff,\
-hardening_type, omega_matter, omega_lambda, snapnum, galaxyId, P1_galaxyId, P2_galaxyId, zs_tree):
+hardening_type, omega_matter, omega_lambda, snapnum, galaxyId, P1_galaxyId, P2_galaxyId, z_tree):
 	"""
 	Function to analyze the output (integer between 1 and 7) of triple interaction:
 		j==1: prompt merger between m_1 and m_2
@@ -46,7 +46,7 @@ hardening_type, omega_matter, omega_lambda, snapnum, galaxyId, P1_galaxyId, P2_g
 		tree_index -> index that signals the end of the tree to which merger
 					  k belongs
 		redshift -> redshift of the merger k
-		mass_int -> mass of the intruder (in solar masses)
+		mass_intr -> mass of the intruder (in solar masses)
 		mass_b1, mass_b2 -> masses of the internal binary black holes (in solar
 							masses)
 		time_to_sink -> dynamical friction time (in Gyr) between the intruder and
@@ -134,7 +134,7 @@ hardening_type, omega_matter, omega_lambda, snapnum, galaxyId, P1_galaxyId, P2_g
 
 	m_1 = max(mass_b1, mass_b2)
 	m_2 = min(mass_b1, mass_b2)
-	m_3 = mass_int
+	m_3 = mass_intr
 
 
 	if (triplet_output == 1 or triplet_output == 3 or triplet_output == 5): # Prompt merger!

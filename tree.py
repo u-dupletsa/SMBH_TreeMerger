@@ -417,13 +417,13 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 						 omega_matter, omega_lambda, snapnum[i : tree_index], galaxyId[i : tree_index],
 						 P1_Id[i : tree_index], P2_Id[i : tree_index], D_z[i : tree_index])
 
-				merger_redshift_vector[k], time_to_merge[k], time_star[k], time_gas[k], time_gw[k], time_to_next_merger[k] = output[10 : 17]
+				merger_redshift_vector[k], time_to_merge[k], time_star[k], time_gas[k], time_gw[k], time_to_next_merger[k] = output[10 : 16]
 				descendant_index[k], P1, P2 = output[0:3]
 
 				prompt_vector[k], ejection_vector[k], forced_binary_vector[k], failed_prompt_vector[k],\
 				failed_ejection_vector[k], failed_forced_vector[k], still_merging_vector[k] = output[3:10]
 
-				if(failed_prompt_vector[k] == 1 or failed_ejection_vector[k] == 1 or  failed_forced_vector == 1):
+				if(failed_prompt_vector[k] == 1 or failed_ejection_vector[k] == 1 or  failed_forced_vector[k] == 1):
 					
 					q_bin = output[17]	
 					
