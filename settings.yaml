@@ -1,0 +1,26 @@
+bertone:
+            h:                0.73
+            omega_matter:     0.25
+            omega_lambda:     0.75
+
+de_lucia:
+            h:                0.73
+            omega_matter:     0.25
+            omega_lambda:     0.75
+
+guo2010:
+            h:                0.73
+            omega_matter:     0.25
+            omega_lambda:     0.75
+
+guo2013:
+            h:                0.704
+            omega_matter:     0.272
+            omega_lambda:     0.728
+
+horizon:
+            h:                0.704
+            omega_matter:     0.272
+            omega_lambda:     0.728
+
+

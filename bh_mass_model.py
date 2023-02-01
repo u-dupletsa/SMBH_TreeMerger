@@ -34,7 +34,7 @@ def bh_mass_function(model, bulge_mass):
 		masses
 	"""
 	if (model == 'KH'):
-		mean = 8.69 + 1.17 * math.log10(bulge_mass / 10**(11))
+		mean = 8.69 + 1.17 * np.log10(bulge_mass / 10**(11))
 		sigma = 0.28
 		bh_mass = np.random.normal(mean, sigma)
 		bh_mass = 10**(bh_mass)
@@ -66,8 +66,7 @@ def radio(time, hot_mass, vvir, bh_mass, stellar_mass):
 
 	time = time * cst.Gyr / cst.t_1yr
 	dark_mass = 0.5 * 10**2 * stellar_mass
-	delta_mass_radio = cst.kappa * (hot_mass / dark_mass / 0.1) * (vvir / 200)**3*\
-					   (bh_mass * h/10**8)*(time)
+	delta_mass_radio = cst.kappa * (hot_mass / dark_mass / 0.1) * (vvir / 200)**3 * (bh_mass * h/10**8)*(time)
 
 	return delta_mass_radio # it's in solar masses
 
@@ -100,8 +99,7 @@ def quasar(stellar_mass_P1, stellar_mass_P2, cold_mass, vvir):
 		stellar_mass_host = stellar_mass_P2
 		stellar_mass_satellite = stellar_mass_P1
 		
-	delta_mass_quasar = cst.f * (stellar_mass_satellite / stellar_mass_host) * \
-						(cold_mass / (1 + 280 / vvir))
+	delta_mass_quasar = cst.f * (stellar_mass_satellite / stellar_mass_host) * (cold_mass / (1 + 280 / vvir))
 
 	return delta_mass_quasar
 

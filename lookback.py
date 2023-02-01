@@ -37,6 +37,22 @@ def lookback_function(z, omega_matter, omega_lambda):
 
 	return 1 / ((1 + z) * np.sqrt(omega_matter * (1 + z)**3 + omega_lambda))
 
+def rate_function(z, omega_matter, omega_lambda):
+
+	"""
+	lookback_function evaluates the integrand at a given z
+
+	input parameters:
+		z -> the redshift value at which to evaluate the integrand
+		omega_matter -> matter energy density
+		omega_lambda -> dark energy density
+
+	return:
+		value (float) of the integrand, f
+	"""
+
+	return 1 / (np.sqrt(omega_matter * (1 + z)**3 + omega_lambda))
+
 def time_between_mergers(z1, z2, omega_matter, omega_lambda):
 
 	"""
@@ -88,7 +104,7 @@ def find_descendant(k, tree_index, snapnum, galaxyId, P1_galaxyId, P2_galaxyId, 
 		--> [descendant_index, P1, P2, z]
 	"""
 
-	# Set to zero the descendant type (progenitor 1 or 2)
+	# Set to zero the descendant type (progenitor 1 and 2)
 	P1 = 0
 	P2 = 0
 	descendant_index = -1 # deafult value if there is no descendant
@@ -159,7 +175,7 @@ def integrate_rate(z, omega_matter, omega_lambda):
 		the value (float) of the integral
 	"""
 
-	integral, precision = quad(lookback_function, 0., z, args=(omega_matter, omega_lambda))
+	integral, precision = quad(rate_function, 0., z, args=(omega_matter, omega_lambda))
 
 	return integral
 

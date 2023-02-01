@@ -5,8 +5,8 @@
 # for both the remnant and the progenitor galaxies. The new 
 # columns are added to the injection data files.
 #
-#    Input file: --> sel_starting_ordered_<catalog>.hdf5 
-#    Output file:--> injection_<catalog>.hdf5
+#    Input file: --> sel_starting_ordered_<catalog>.csv`
+#    Output file:--> injection_<catalog>_<mass_model>_<density_model>.csv
 #
 # !Further information is provided below each function
 #############################################################

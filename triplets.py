@@ -338,8 +338,6 @@ hardening_type,omega_matter,omega_lambda,snapnum,galaxyId,P1_galaxyId,P2_galaxyI
 			still_merging = 1
 			merger_redshift = -1
 
-	if(time_to_merge < 0):
-		print('whily???')
 
 	
 	return int(info_descendant[0]), int(type_P1), int(type_P2), int(prompt_plus_delayed), int(ejection_plus_delayed),\

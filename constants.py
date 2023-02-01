@@ -13,10 +13,13 @@ H = 15 # stellar hardening constant
 kappa = 1.5*10**(-5) # radio mode accretion constant
 f = 0.03 # quasar mode accretion constant
 
+LM = 500
+
 freq_1yr = 3.17098*10**(-8)
 t_1yr = 3.15*10**7
 Gyr = 3.15*10**16
 TH0 = 13.4 #(Hubble time, in Gyr)
+H0 = 100 * 10**3 / (10**6 * pc) # in h units
 
 gamma = 1 # parameter of the Dehnen profile (Hernquist if gamma=1)
 

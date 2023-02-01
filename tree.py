@@ -247,7 +247,7 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 				
 				if(info_descendant[0] != -1):
 
-					q_bin = min(mass1[k],mass2[k])/max(mass1[k],mass2[k])
+					q_bin = min(mass1[k],mass2[k]) / max(mass1[k],mass2[k])
 					
 					if (time_to_merge[k] > time_to_next_merger[k]):
 						failed_binary_vector[k] = 1
@@ -262,8 +262,8 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 							merger_time_diff[info_descendant[0]] = time_to_merge[k] - time_to_next_merger[k]
 							type_P1[info_descendant[0]] = 2
 							P1_marker[info_descendant[0]] = k
-							mass1_1[info_descendant[0]] = q_bin/(1+q_bin)*mass1[info_descendant[0]]				
-							mass1_2[info_descendant[0]] = 1/(1+q_bin)*mass1[info_descendant[0]]
+							mass1_1[info_descendant[0]] = q_bin / (1 + q_bin) * mass1[info_descendant[0]]				
+							mass1_2[info_descendant[0]] = 1 / (1 + q_bin) * mass1[info_descendant[0]]
 
 
 						if (info_descendant[1] == 0 and info_descendant[2] == 1):
@@ -271,8 +271,8 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 							merger_time_diff[info_descendant[0]] = time_to_merge[k] - time_to_next_merger[k]
 							type_P2[info_descendant[0]] = 2
 							P2_marker[info_descendant[0]] = k
-							mass2_1[info_descendant[0]] = q_bin/(1+q_bin)*mass2[info_descendant[0]]
-							mass2_2[info_descendant[0]] = 1/(1+q_bin)*mass2[info_descendant[0]]
+							mass2_1[info_descendant[0]] = q_bin / (1 + q_bin) * mass2[info_descendant[0]]
+							mass2_2[info_descendant[0]] = 1 / (1 + q_bin) * mass2[info_descendant[0]]
 			
 
 					else:

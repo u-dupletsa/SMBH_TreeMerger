@@ -23,9 +23,10 @@ import yaml
 #################################################################
 # Select catalog and model
 #catalog = ['de_lucia', 'bertone', 'guo2010', 'guo2013', 'horizon']
-catalog = 'guo2010'
+catalog = 'de_lucia'
 mass_model = 'KH' # KH or millennium
-density_model = 'isothermal' # isothermal or dehnen
+density_model = 'dehnen' # isothermal or dehnen
+
 print('Analysing %s catalog with masses modeled as %s and %s density profile' 
 		%(str(catalog),str(mass_model),str(density_model)))
 #################################################################
@@ -34,8 +35,7 @@ print('Analysing %s catalog with masses modeled as %s and %s density profile'
 with open('settings.yaml') as f:
     doc = yaml.load(f, Loader=yaml.FullLoader)
 
-
-
+np.random.seed(0)
 
 data_folder = 'Data/InputData'
 
@@ -54,7 +54,7 @@ h = eval(str(catalog_properties['h']))
 omega_matter = eval(str(catalog_properties['omega_matter']))
 omega_lambda = eval(str(catalog_properties['omega_lambda']))
 
-# Specify path
+# Injection files paths
 path_data = '%s/injection_%s_%s_%s.csv' %(str(data_folder), str(catalog), str(mass_model), str(density_model))
 path_index = '%s/tree_indexes_%s.csv' %(str(data_folder), str(catalog))
 
