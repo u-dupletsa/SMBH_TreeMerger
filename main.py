@@ -1,5 +1,5 @@
 #############################################################
-# MAIN prograM
+# MAIN program
 #
 # Launches the analisys of merger trees of a given catalog
 #

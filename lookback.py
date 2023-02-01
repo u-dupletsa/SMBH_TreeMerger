@@ -7,7 +7,8 @@
 #
 #    --> lookback_function(z,omega_matter,omega_lambda)
 #    --> time_between_mergers(z1,z2,omega_matter,omega_lambda)
-#    --> find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,P2_galaxyId,redshift)
+#    --> find_descendant(k,tree_index,snapnum,galaxyId,P1_galaxyId,
+#		P2_galaxyId,redshift)
 #    --> find_redshift(z,time_to_merge,omega_matter,omega_lambda)
 #    --> integrate_rate(z,omega_matter,omega_lambda)
 #
