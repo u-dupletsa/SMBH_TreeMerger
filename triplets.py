@@ -113,7 +113,6 @@ hardening_type, omega_matter, omega_lambda, snapnum, galaxyId, P1_galaxyId, P2_g
 
 	Gyr = cst.Gyr
 	start_time = 3*10**8/Gyr
-	e = cst.ecc
 
 	merger_diff = 0
 	
@@ -168,7 +167,7 @@ hardening_type, omega_matter, omega_lambda, snapnum, galaxyId, P1_galaxyId, P2_g
 			else:
 				q_bin = mass1/mass2
 
-		time_no_df, time_star, time_gas, time_gw = delay_time.tot_delay_no_df(sigma_inf, rho_inf, r_inf, mass1, mass2, e,
+		time_no_df, time_star, time_gas, time_gw = delay_time.tot_delay_no_df(sigma_inf, rho_inf, r_inf, mass1, mass2,
 													m_dot, hardening_type)
 		time_to_merge = time_to_sink + time_no_df
 

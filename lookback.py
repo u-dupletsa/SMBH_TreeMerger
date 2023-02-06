@@ -148,18 +148,19 @@ def find_redshift(z, time_to_merge, omega_matter, omega_lambda):
 	# Select number of points to integrate
 	spacing = 0.005
 	N = int(z / spacing)
-	dz = np.linspace(z, 0., num=N)
+	if (N == 1 or N == 0):
+		N = 5
+		
+	dz = np.linspace(z, 0., num = N)
 	i = 1
 	time = time_between_mergers(dz[i], z, omega_matter, omega_lambda)
 	# Search for the nearest redshift that gives the elapsed
 	# time
-	while ((time - time_to_merge) / time_to_merge < 0.01 and i < (N - 1)):
+	while ((time_to_merge - time) / time_to_merge > 0.01 and i < (N - 1)):
 		i = i+1
 		time = time_between_mergers(dz[i], z, omega_matter, omega_lambda)
 
-	z = dz[i]
-	
-	return z	
+	return dz[i]
 
 
 def integrate_rate(z, omega_matter, omega_lambda):

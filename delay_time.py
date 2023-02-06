@@ -46,9 +46,9 @@ def coulomb_logarithm(sigma1, sigma2):
 	"""
 
 	if(sigma1 > sigma2):
-		value = np.log(2**(2/3) * sigma1 / sigma2) # np.log is the natural logarithm
+		value = np.log(2**(3/2) * sigma1 / sigma2) # np.log is the natural logarithm
 	else:
-		value = np.log(2**(2/3) * sigma2 / sigma1)
+		value = np.log(2**(3/2) * sigma2 / sigma1)
 
 	return value
 
@@ -57,6 +57,7 @@ def time_df_binney(stellar_mass, mass1, mass2):
 	"""
 	Function that evaluates the dynamical friction time
 	delay, following the prescription by Binney&Tremaine
+	This is used for df time in Horizon-AGN catalog
 
 	input parameters:
 		r_eff -> effectve radius (in pc) of the remnant 
@@ -101,12 +102,12 @@ def time_df_phase1(r_eff, sigma1, sigma2, mass2):
 	"""
 	coulomb_log = coulomb_logarithm(sigma1, sigma2)
 	time_dyn_1 = 0.06 * 2/coulomb_log * (r_eff/(10**4))**2. * (sigma1/(300.)) * ((10**8.)/mass2)
-	time_dyn_2 = 0.15 * 2/coulomb_log * (r_eff/(10**4))**2. * (sigma1/(300.)) * (100./sigma2)**3.
+	time_dyn_2 = 0.15 * 2/coulomb_log * (r_eff/(10**4)) * (sigma1/(300.))**2 * (100./sigma2)**3.
 
 	return np.max([time_dyn_1, time_dyn_2])
 
 
-def time_df_phase2(r_eff, r_inf, sigma1, sigma2, mass1, mass2):
+def time_df_phase2(density_model, r_eff, r_inf, sigma1, sigma2, mass1, mass2):
 	""" 
 	Function that calculates the second phase of dynamical
 	friction following Desopoulou and Antonini
@@ -129,18 +130,26 @@ def time_df_phase2(r_eff, r_inf, sigma1, sigma2, mass1, mass2):
 	"""
 
 	coulomb_log = coulomb_logarithm(sigma1, sigma2)
-	#b_max = r_eff
-	#b_min = (G*mass2*M_sun/(sigma2*10**3)**2)/pc
-	#coulomb_log_primed = np.log(b_max/b_min)
 	coulomb_log_primed = np.log(mass1/mass2)
 
-	alpha = 0.5
-	beta = 1.37
-	delta = -0.85
+	if(density_model == 'isothermal'):
+		b = 0.5
+		alpha = 0.5
+		beta = 1.37
+		delta = -0.85
+		gamma = 2
+	elif(density_model == 'dehnen'):
+		b = 2.5
+		alpha = 0.84
+		beta = 0.54
+		delta = -0.29
+		gamma = 4
 
-	time_bare = 0.015 * (coulomb_log_primed * alpha + beta + delta)**(-1) * 2 * (1 - (mass2/(2*mass1))**(1/2)) * \
+	chi = (mass2 / (2 * mass1))**(1 / (3 - gamma))
+
+	time_bare = 0.015 * (coulomb_log_primed * alpha + beta + delta)**(-1) / ((1.5 - gamma) * (3 - gamma)) * (chi**(gamma - 1.5) - 1) * \
 				(mass1 / (3 * 10**9))**(1/2) * (mass2 / (10**8))**(-1) * (r_inf / 300)**(3/2)
-	time_gal = 0.012 * (coulomb_log * alpha + beta + delta)**(-1) * (2 * mass1/mass2 - 1) * (mass1/(3 * 10**9)) * (100/sigma2)**3
+	time_gal = 0.012 * (coulomb_log * alpha + beta + delta)**(-1) / (3 - gamma)**2 * (chi**(gamma - 3) - 1) * (mass1/(3 * 10**9)) * (100/sigma2)**3
 
 	return np.min([time_bare, time_gal])
 
@@ -164,7 +173,7 @@ def eccentricity(e):
 
 #############################################################
 
-def time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary, e):
+def time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary):
 	"""
 	Function to calculate the time delay due to stellar hardening
  
@@ -184,10 +193,10 @@ def time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary, e):
 		hardening time delay (in Gyr)
 			-> ([a_hard_gw, time_star])
 	"""
-	sigma_inf = sigma_inf * 10**3 / cst.pc # convert to pc
+	sigma_inf = sigma_inf * 10**3 / cst.pc # convert from km/s to pc/s
 	a_hard_gw = (64 * cst.G_new**2 * sigma_inf * mass1 * mass2 * mass_binary * \
-				eccentricity(e)/(5 * cst.c_new**5 * cst.H * rho_inf))**(1/5)
-	time_star = sigma_inf/(cst.G_new * cst.H * rho_inf * a_hard_gw) / cst.Gyr
+				eccentricity(cst.e) / (5 * cst.c_new**5 * cst.H * rho_inf))**(1/5)
+	time_star = sigma_inf/(cst.G_new * cst.H * rho_inf) * (1 / a_hard_gw - 1 / r_inf) / cst.Gyr
 
 	return ([a_hard_gw, time_star])
 
@@ -195,7 +204,7 @@ def time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary, e):
 
 #############################################################
 
-def time_gas(mass1, mass2, mass_binary, m_dot, r_inf, e):
+def time_gas(mass1, mass2, mass_binary, m_dot, r_inf):
 	"""
 	Function to calculate the time delay due to gaseous hardening,
 	in case stellar hardening is not efficient enough
@@ -214,10 +223,10 @@ def time_gas(mass1, mass2, mass_binary, m_dot, r_inf, e):
 		hardening time delay (in Gyr)
 			-> ([a_gas_gw, time_gas])
 	"""
-	constant = 16 * 2**(1/2) / 5 * cst.G_new**3 / cst.c_new**5
-	a_gas_gw = (constant * mass1**2 * mass2**2 * eccentricity(e) / (m_dot))**(1/4)
-	time_gas = (1/(2 * 2**(1/2)) * mass1 * mass2 / mass_binary / (m_dot) * \
-				np.log(r_inf / a_gas_gw)) / cst.Gyr
+	constant = 16 * 2**(1/2) / 5 * cst.G_new**3 / cst.c_new**5 * eccentricity(cst.e)
+	a_gas_gw = (constant * mass1**2 * mass2**2  / (m_dot))**(1/4)
+	mu = mass1 * mass2 / mass_binary
+	time_gas = (2**0.5 / 4 * mu / m_dot * np.log(r_inf / a_gas_gw)) / cst.Gyr
 
 	return ([a_gas_gw, time_gas])
 
@@ -238,7 +247,7 @@ def time_gw(a_in, mass1, mass2, mass_binary):
 	return:
 		gravitational wave time delay (in Gyr)
 	"""
-	constant = 5/256 * cst.c_new**5 / cst.G_new**3
+	constant = 5. / 256. * cst.c_new**5 / cst.G_new**3 / eccentricity(cst.e)
 	time_gw = (constant * a_in**4 / (mass1 * mass2 * mass_binary)) / cst.Gyr
 
 	return time_gw
@@ -246,8 +255,8 @@ def time_gw(a_in, mass1, mass2, mass_binary):
 
 #############################################################
 
-def tot_delay_function(host_r_eff, host_sigma, satellite_sigma, satellite_BH,
-						sigma_inf, rho_inf, r_inf, mass1, mass2, e, m_dot, 
+def tot_delay_function(density_model, host_r_eff, host_sigma, satellite_sigma, satellite_BH,
+						sigma_inf, rho_inf, r_inf, mass1, mass2, m_dot, 
 						stellar_mass, r_eff,hardening_type):
 	"""
 	Function that calculates the total delay time between galaxy and
@@ -284,12 +293,12 @@ def tot_delay_function(host_r_eff, host_sigma, satellite_sigma, satellite_BH,
 
 	mass_binary = mass1 + mass2
 
-	if(hardening_type == 0): # Both stellar and gaseous hardening
+	df_phase1 = time_df_phase1(host_r_eff, host_sigma, satellite_sigma, satellite_BH)
+	df_phase2 = time_df_phase2(density_model, host_r_eff, r_inf, host_sigma, satellite_sigma, mass1, mass2)
 
-		df_phase1 = time_df_phase1(host_r_eff, host_sigma, satellite_sigma, satellite_BH)
-		df_phase2 = time_df_phase2(host_r_eff, r_inf, host_sigma, satellite_sigma, mass1, mass2)
-		a_stars_gw, stars = time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary, e)
-		a_gas_gw, gas = time_gas(mass1, mass2, mass_binary, m_dot, r_inf, e)
+	if(hardening_type == 0): # Both stellar and gaseous hardening
+		a_stars_gw, stars = time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary)
+		a_gas_gw, gas = time_gas(mass1, mass2, mass_binary, m_dot, r_inf)
 
 		if(stars < gas):
 			gws = time_gw(a_stars_gw, mass1, mass2, mass_binary)
@@ -299,10 +308,7 @@ def tot_delay_function(host_r_eff, host_sigma, satellite_sigma, satellite_BH,
 			delay_time = df_phase1 + df_phase2 + gas + gws
 
 	else:
-
-		df_phase1 = time_df_phase1(host_r_eff, host_sigma, satellite_sigma, satellite_BH)
-		df_phase2 = time_df_phase2(host_r_eff, r_inf, host_sigma, satellite_sigma, mass1, mass2)
-		a_stars_gw, stars = time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary, e)
+		a_stars_gw, stars = time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary)
 		gas = 0.
 		gws = time_gw(a_stars_gw, mass1, mass2, mass_binary)
 		
@@ -311,7 +317,7 @@ def tot_delay_function(host_r_eff, host_sigma, satellite_sigma, satellite_BH,
 	return ([delay_time, df_phase1, df_phase2, stars, gas, gws])
 	
 
-def tot_delay_no_df(sigma_inf, rho_inf, r_inf, mass1, mass2, e, m_dot, hardening_type):
+def tot_delay_no_df(sigma_inf, rho_inf, r_inf, mass1, mass2, m_dot, hardening_type):
 	"""
 	Function that evaluates the delay time due to the hardening and gw
 	coalescence processes (no dynamical friction)
@@ -341,8 +347,8 @@ def tot_delay_no_df(sigma_inf, rho_inf, r_inf, mass1, mass2, e, m_dot, hardening
 
 	if(hardening_type == 0):
 
-		a_stars_gw, stars = time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary, e)
-		a_gas_gw, gas = time_gas(mass1, mass2, mass_binary, m_dot, r_inf, e)
+		a_stars_gw, stars = time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary)
+		a_gas_gw, gas = time_gas(mass1, mass2, mass_binary, m_dot, r_inf)
 
 		if(stars < gas):
 			gws = time_gw(a_stars_gw, mass1, mass2, mass_binary)
@@ -353,7 +359,7 @@ def tot_delay_no_df(sigma_inf, rho_inf, r_inf, mass1, mass2, e, m_dot, hardening
 
 	else:
 
-		a_stars_gw, stars = time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary, e)
+		a_stars_gw, stars = time_star(sigma_inf, rho_inf, r_inf, mass1, mass2, mass_binary)
 		gas = 0.
 		gws = time_gw(a_stars_gw, mass1, mass2, mass_binary)
 		

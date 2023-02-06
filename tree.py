@@ -36,10 +36,7 @@ import constants as cst
 
 def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, tree_start, tree_end):
 
-	e = cst.ecc #deafult eccentricity value
-
 	ns = len(data['galaxyId'])
-
 
 	galaxyId = data['galaxyId'].copy()
 	lastProgenitorId = data['lastProgenitorId'].copy()
@@ -260,9 +257,9 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 							
 				# Calculate the binary merger time
 				time_to_merge[k], time_df_ph1[k], time_df_ph2[k], time_star[k],\
-				time_gas[k], time_gw[k] = delay_time.tot_delay_function(host_r_eff[k], host_sigma[k],
+				time_gas[k], time_gw[k] = delay_time.tot_delay_function(density_model, host_r_eff[k], host_sigma[k],
 										satellite_sigma[k], satellite_BH[k], sigma_inf[k], rho_inf[k],
-										r_inf[k], mass1[k], mass2[k], e, m_dot[k], D_mass[k], r_eff[k],
+										r_inf[k], mass1[k], mass2[k], m_dot[k], D_mass[k], r_eff[k],
 										hardening_type[k])
 				time_df[k] = time_df_ph1[k] + time_df_ph2[k]
 				
@@ -397,7 +394,7 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 				# Calculate time to sink due to dynamical friction	
 				time_df_ph1[k] = delay_time.time_df_phase1(r_eff[k], host_sigma[k],
 								 satellite_sigma[k], satellite_BH[k])
-				time_df_ph2[k] = delay_time.time_df_phase2(r_eff[k], r_inf[k],
+				time_df_ph2[k] = delay_time.time_df_phase2(density_model, r_eff[k], r_inf[k],
 								 host_sigma[k], satellite_sigma[k], mass1[k], mass2[k])
 				time_df[k] = time_df_ph1[k] + time_df_ph2[k]
 
@@ -445,14 +442,14 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 
 
 
-	data['type_P1'] = type_P1
-	data['type_P2'] = type_P2
-	data['P1_marker'] = P1_marker
-	data['P2_marker'] = P2_marker
-	data['mass1_1'] = mass1_1
-	data['mass2_1'] = mass2_1
-	data['mass1_2'] = mass1_2
-	data['mass2_2'] = mass2_2
+	#data['type_P1'] = type_P1
+	#data['type_P2'] = type_P2
+	#data['P1_marker'] = P1_marker
+	#data['P2_marker'] = P2_marker
+	#data['mass1_1'] = mass1_1
+	#data['mass2_1'] = mass2_1
+	#data['mass1_2'] = mass1_2
+	#ata['mass2_2'] = mass2_2
 	data['form_binary_vector'] = form_binary_vector
 	data['form_triplet_vector'] = form_triplet_vector
 	data['form_quadruplet_vector'] = form_quadruplet_vector
@@ -466,16 +463,16 @@ def tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, t
 	data['failed_forced_vector'] = failed_forced_vector
 	data['still_merging_vector'] = still_merging_vector
 	data['time_to_merge'] = time_to_merge
+	data['time_to_next_merger'] = time_to_next_merger
+	data['time_df'] = time_df
 	data['time_df_ph1'] = time_df_ph1
 	data['time_df_ph2'] = time_df_ph2
 	data['time_star'] = time_star
 	data['time_gas'] = time_gas
 	data['time_gw'] = time_gw
-	data['time_df'] = time_df
-	data['merger_time_diff'] = merger_time_diff
+	#data['merger_time_diff'] = merger_time_diff
 	data['merger_redshift_vector'] = merger_redshift_vector
-	data['time_to_next_merger'] = time_to_next_merger
-	data['descendant_index'] = descendant_index
+	#data['descendant_index'] = descendant_index
 	data['q_in'] = q_in
 	data['q_out'] = q_out
 

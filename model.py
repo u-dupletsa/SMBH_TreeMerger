@@ -151,7 +151,7 @@ def generate_input(catalog, mass_model, density_model, h):
 			P2_M_cold[k] = P2_M_cold[k] * cst.mass_conv / h
 			P1_M_hot[k] = P1_M_hot[k] * cst.mass_conv / h
 			P2_M_hot[k] = P2_M_hot[k] * cst.mass_conv / h
-			# convert sfr variables in Msol per year
+			# convert sfr variables in Msol per second
 			sfr[k] = sfr[k] / cst.t_1yr 
 			sfr_bulge[k] = sfr_bulge[k] / cst.t_1yr
 
@@ -234,7 +234,7 @@ def generate_input(catalog, mass_model, density_model, h):
 				m_dot[k] = 0. # we will employ stellar hardening only!
 			else:
 				hardening_type[k] = 0.
-				m_dot[k] = (1.16 * 10**(13) * (sfr[k])**(0.93)) / (0.1 * cst.c**2)
+				m_dot[k] = ((sfr[k])**(0.93)) / (10**2.89)
 
 
 				

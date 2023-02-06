@@ -23,18 +23,18 @@ H0 = 100 * 10**3 / (10**6 * pc) # in h units
 
 gamma = 1 # parameter of the Dehnen profile (Hernquist if gamma=1)
 
-ecc = 0. # default eccentricity value
+e = 0. # default eccentricity value
 
-acc_rate = 0.1
-sigma_thompson = 6.65*10**(-29)
-m_protone = 1.67*10**(-27)
+#acc_rate = 0.1
+#sigma_thompson = 6.65*10**(-29)
+#m_protone = 1.67*10**(-27)
 
 
-# To convert from kms in solar masses and parsec
-length_conv_new = 0.324*10**(-16)
-mass_conv_new = 0.5025*10**(-30)
-# [G] = [L]^3 [M]^(-1) [T]^(-2)
-# [c] = [L] [T]
+# To convert from meters to parsec and from kg to Msol
+length_conv_new = 1./pc
+mass_conv_new = 1./M_sun
+# [G] = [L]^3 [M]^(-1) [T]^(-2) dimensional analysis of G
+# [c] = [L] [T]^(-1) dimensional analysis of c
 G_new = G*(length_conv_new)**3/mass_conv_new
 c_new = c*length_conv_new
 

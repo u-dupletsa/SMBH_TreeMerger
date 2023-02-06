@@ -22,10 +22,10 @@ import yaml
 #################################################################
 #################################################################
 # Select catalog and model
-#catalog = ['de_lucia', 'bertone', 'guo2010', 'guo2013', 'horizon']
-catalog = 'de_lucia'
+#catalogs = ['de_lucia', 'bertone', 'guo2010', 'guo2013', 'horizon']
+catalog = 'guo2013'
 mass_model = 'KH' # KH or millennium
-density_model = 'dehnen' # isothermal or dehnen
+density_model = 'isothermal' # isothermal or dehnen
 
 print('Analysing %s catalog with masses modeled as %s and %s density profile' 
 		%(str(catalog),str(mass_model),str(density_model)))
@@ -47,7 +47,6 @@ lbs = ['galaxyId', 'lastProgenitorId', 'snapnum', 'descendantId', 'P1_Id', 'P2_I
 	   'r_inf_P1', 'sigma_P1', 'r_eff_P2', 'r_inf_P2', 'sigma_P2', 'host_r_eff', 'host_sigma', 
 	   'satellite_sigma', 'satellite_BH', 'host_BH', 'r_eff', 'r_inf', 'sigma_inf', 'rho_inf',
 	   'm_dot', 'hardening_type']
-
 
 catalog_properties = doc[catalog]
 h = eval(str(catalog_properties['h']))
@@ -78,10 +77,8 @@ else:
 	index_data = pd.read_csv(path_index, names = ['start', 'end'], skiprows = 1, delimiter = ',')
 	print('Opening index file')
 
-
 tree_start = index_data['start'].copy()
 tree_end = index_data['end'].copy()
 
 print('Launching tree analysis')
 tree.tree(catalog, density_model, mass_model, omega_matter, omega_lambda, data, tree_start, tree_end)
-

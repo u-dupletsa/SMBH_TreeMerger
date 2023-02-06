@@ -55,7 +55,6 @@ def effective_radius(bulge_mass, stellar_mass, redshift):
 	return:
 		value (float) of the effective radius (in pc)
 	"""
-
 	if (bulge_mass / stellar_mass >= 0.7): # elliptical!
 		for i in range(len(z) - 1):
 			if(redshift < z[i+1] and redshift >= z[i]):
@@ -71,7 +70,7 @@ def effective_radius(bulge_mass, stellar_mass, redshift):
 
 
 
-def scale_radius(r_eff, gamma):
+def scale_radius(r_eff):
 	"""
 	Computes the scale radius of the model
 
@@ -83,7 +82,7 @@ def scale_radius(r_eff, gamma):
 		scale_radius in pc
 	"""
 
-	return 4/3 * (2**(1/(3 - gamma)) - 1) * r_eff
+	return 4/3 * (2**(1/(3 - cst.gamma)) - 1) * r_eff
 
 
 
@@ -105,12 +104,36 @@ def influence_radius(density_model, r_eff, stellar_mass, binary_mass):
 		r_inf = r_eff * (4 * binary_mass / stellar_mass)
 
 	elif (density_model == 'dehnen'):
-		gamma = cst.gamma
-		r_scale = scale_radius(r_eff, gamma)
-		r_inf = r_scale / ((stellar_mass / (2 * binary_mass))**(1/(3 - gamma)) - 1)
+		r_scale = scale_radius(r_eff)
+		r_inf = r_scale / ((stellar_mass / (2 * binary_mass))**(1/(3 - cst.gamma)) - 1)
 
 
 	return r_inf # in pc
+
+def rho(density_model, stellar_mass, r_eff, r):
+	"""
+	Function that computes the density as function of radius
+
+	input parameters:
+		density_model -> isothermal or dehnen
+		stellar_mass -> total mass of the galaxy (in solar masses)
+		r_inf -> influence radius of the binary (in pc)
+		r -> radius at which compute rho (in pc)
+
+	return:
+		value (float) of the density in solar masses per pc^3 at r
+	"""
+
+	if (density_model == 'isothermal'):
+		rho = stellar_mass / (8 * np.pi * r**2 * r_eff)
+
+	elif (density_model == 'dehnen'):
+		r_scale = scale_radius(r_eff)
+		rho = (3 - cst.gamma) / (4 * np.pi) * stellar_mass * r_scale / (r**cst.gamma * (r + r_scale)**(4 - cst.gamma))
+	
+
+	return rho # in M_sun/(pc^3)
+
 
 
 def rho_inf(density_model, stellar_mass, r_eff, r_inf):
@@ -131,9 +154,8 @@ def rho_inf(density_model, stellar_mass, r_eff, r_inf):
 		rho = stellar_mass / (8 * np.pi * r_inf**2 * r_eff)
 
 	elif (density_model == 'dehnen'):
-		gamma = cst.gamma
-		r_scale = scale_radius(r_eff, gamma)
-		rho = (3 - gamma) / (4 * np.pi) * stellar_mass * r_scale / (r_inf**gamma * (r_inf + r_scale)**(4 - gamma))
+		r_scale = scale_radius(r_eff)
+		rho = (3 - cst.gamma) / (4 * np.pi) * stellar_mass * r_scale / (r_inf**cst.gamma * (r_inf + r_scale)**(4 - cst.gamma))
 	
 
 	return rho # in M_sun/(pc^3)
@@ -168,10 +190,9 @@ def sigma(density_model, stellar_mass, r_eff, r_inf):
 		sigma = (cst.G_new * stellar_mass / (4 * r_eff))**(1/2) * cst.pc / 10**3
 
 	elif (density_model == 'dehnen'):
-		gamma = cst.gamma
-		r_scale = scale_radius(r_eff, gamma)
+		r_scale = scale_radius(r_eff)
 		sigma, precision = quad(integrand_hernquist, r_inf, r_eff, args=(r_scale, stellar_mass))
-		sigma = sigma**(1/2) * cst.pc/10**3	
+		sigma = (sigma / (r_eff - r_inf))**(1/2) * cst.pc/10**3	
 
 
 	return sigma # in km/s
@@ -196,9 +217,9 @@ def sigma_inf(density_model, binary_mass, stellar_mass, r_eff, r_inf):
 
 	elif (density_model == 'dehnen'):
 		gamma = cst.gamma
-		r_scale = scale_radius(r_eff, gamma)
+		r_scale = scale_radius(r_eff)
 		sigma_inf_value = integrand_hernquist(r_inf, r_scale, stellar_mass)
-		sigma_inf_value = sigma_inf_value**(1/2) * cst.pc/10**3
+		sigma_inf_value = (sigma_inf_value)**(1/2) * cst.pc/10**3
 
 
 	return sigma_inf_value # in km/s
