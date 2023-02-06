@@ -1,5 +1,0 @@
-Merger rate computation
-=======================
-
-
-
