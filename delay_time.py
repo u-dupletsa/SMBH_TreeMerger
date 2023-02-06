@@ -9,17 +9,17 @@
 #   --> time_df_phase1(r_eff,stellar_mass,mass1,mass2)
 #   --> time_df_phase2(r_eff,sigma1,sigma2,mass2)
 #   --> time_star(sigma_inf,rho_inf,r_inf,mass1,
-#                         mass2,mass_binary,e)
+#                         mass2,mass_binary)
 #   --> time_gas(mass1,mass2,mass_binary,m_dot,
-#                         r_inf,e)
+#                         r_inf)
 #   --> time_gw(a_in,mass1,mass2,mass_binary)
 #   --> tot_delay_function(host_r_eff,host_sigma,
 #                          satellite_sigma,satellite_BH,
 #                          sigma_inf,rho_inf,r_inf,mass1,
-#                          mass2,e,m_dot,stellar_mass,
+#                          mass2,m_dot,stellar_mass,
 #                          r_eff,hardening_type)
 #   --> tot_delay_no_df(sigma_inf,rho_inf,r_inf,mass1,
-#                       mass2,e,m_dot,hardening_type)
+#                       mass2,m_dot,hardening_type)
 #
 # !Further information is provided below each function
 #############################################################
